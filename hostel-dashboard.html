@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Warden Dashboard | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+  <link rel="stylesheet" href="hostel.css">
+</head>
+<body class="hostel-body">
+
+  <!-- Navigation Bar -->
+  <nav class="hostel-nav">
+    <a href="index.html" class="hostel-logo">College<span>ERP</span></a>
+    <div class="nav-right">
+      <div class="user-profile">
+        <strong id="userName" class="user-name">Warden</strong>
+        <span id="userMeta" class="user-role">Hostel Administrator</span>
+      </div>
+      <button class="btn btn-outline" id="logoutBtn" style="padding: 8px 16px;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="hl-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+  <div class="hostel-container">
+    
+    <!-- Dashboard Header -->
+    <header class="dashboard-header">
+      <h1 class="dashboard-title">🏠 Hostel Management Dashboard</h1>
+      <p class="dashboard-subtitle">Hostel Warden Portal · View room occupancy, manage student check-ins, and handle allocations.</p>
+    </header>
+
+    <!-- Top KPI Stat Cards -->
+    <section class="stats-grid">
+      <div class="stat-card glass" style="border-left: 4px solid var(--gold);">
+        <div class="stat-label">Total Allocated Students</div>
+        <div class="stat-value" id="cardTotalStudents">0</div>
+        <div class="stat-icon">👥</div>
+      </div>
+      <div class="stat-card glass" style="border-left: 4px solid var(--green);">
+        <div class="stat-label">Total Rooms</div>
+        <div class="stat-value" id="cardTotalRooms">0</div>
+        <div class="stat-icon">🏢</div>
+      </div>
+      <div class="stat-card glass" style="border-left: 4px solid var(--yellow);">
+        <div class="stat-label">Occupied Beds</div>
+        <div class="stat-value" id="cardOccupiedBeds">0</div>
+        <div class="stat-icon">🛏️</div>
+      </div>
+      <div class="stat-card glass" style="border-left: 4px solid var(--blue);">
+        <div class="stat-label">Available Beds</div>
+        <div class="stat-value" id="cardAvailableBeds">0</div>
+        <div class="stat-icon">🔑</div>
+      </div>
+    </section>
+
+    <!-- Control Panel -->
+    <section class="control-panel glass">
+      <div class="search-filter-row">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search by name, enrollment, room, class...">
+        </div>
+        <button class="btn btn-gold" onclick="openAddModal()">
+          <span style="font-size: 1.2rem; margin-right: 8px; font-weight: 700;">+</span> Add Student Allocation
+        </button>
+      </div>
+
+      <!-- Filters Section -->
+      <div class="filter-section">
+        <div class="filter-group">
+          <span class="filter-label">Department:</span>
+          <button class="chip active" data-filter="dept" data-value="ALL">ALL</button>
+          <button class="chip" data-filter="dept" data-value="AIML">AIML</button>
+          <button class="chip" data-filter="dept" data-value="CYBER">CYBER</button>
+        </div>
+        <div style="flex-basis: 100%; height: 10px;"></div>
+        <div class="filter-group">
+          <span class="filter-label">Class:</span>
+          <button class="chip active" data-filter="class" data-value="ALL">ALL</button>
+          <button class="chip" data-filter="class" data-value="AIML-A">AIML-A</button>
+          <button class="chip" data-filter="class" data-value="AIML-B">AIML-B</button>
+          <button class="chip" data-filter="class" data-value="AIML-C">AIML-C</button>
+          <button class="chip" data-filter="class" data-value="CYBER-A">CYBER-A</button>
+          <button class="chip" data-filter="class" data-value="CYBER-B">CYBER-B</button>
+          <button class="chip" data-filter="class" data-value="CYBER-C">CYBER-C</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Lists Grid -->
+    <div class="main-grid">
+      
+      <!-- Student Allocation Table Card -->
+      <div class="stat-card glass" style="padding: 24px; border-radius: 16px;">
+        <h2 class="analytics-title" style="margin-bottom: 20px;">📋 Student Allocation Registry</h2>
+        <div class="table-container">
+          <table class="hostel-table">
+            <thead>
+              <tr>
+                <th>Enrollment No.</th>
+                <th>Student Name</th>
+                <th>Department</th>
+                <th>Class</th>
+                <th>Hostel Name</th>
+                <th>Room No.</th>
+                <th>Bed No.</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentTableBody">
+              <!-- Rendered via JS -->
+              <tr>
+                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px;">Loading allocations registry...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Analytics and Room inventory row -->
+      <div class="analytics-section">
+        
+        <!-- Left: Room Management Panel -->
+        <div class="analytics-card glass">
+          <h2 class="analytics-title">🏢 Room Inventory & Occupancy</h2>
+          <div class="room-grid" id="roomGridContainer">
+            <!-- Rendered via JS -->
+            <p style="color: var(--text-muted); padding: 20px;">Loading rooms directory...</p>
+          </div>
+        </div>
+
+        <!-- Right: Demographic charts/breakdowns -->
+        <div class="analytics-card glass">
+          <h2 class="analytics-title">📊 Occupancy Breakdown</h2>
+          
+          <h3 style="font-size: 0.85rem; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px;">Students per Class</h3>
+          <div class="progress-bar-list" id="classAnalyticsList" style="margin-bottom: 30px;">
+            <!-- Rendered via JS -->
+          </div>
+
+          <h3 style="font-size: 0.85rem; color: var(--gold); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 15px;">Students per Hostel</h3>
+          <div class="progress-bar-list" id="hostelAnalyticsList">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ==================== DIALOG MODALS ==================== -->
+
+  <!-- ADD STUDENT ALLOCATION MODAL -->
+  <div id="addModal" class="modal-overlay">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h2 class="modal-title">New Student Allocation</h2>
+        <button class="modal-close" onclick="closeModal('addModal')">&times;</button>
+      </div>
+      <form id="addStudentForm">
+        <div class="form-group">
+          <label class="form-label" for="addName">Student Name</label>
+          <input type="text" id="addName" class="form-input" placeholder="e.g. Arjun Mehta" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="addEnroll">Enrollment Number</label>
+          <input type="text" id="addEnroll" class="form-input" placeholder="e.g. AIML2024001" required>
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="addDept">Department</label>
+            <select id="addDept" class="form-select" required>
+              <option value="AIML">AIML</option>
+              <option value="CYBER">CYBER</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="addClass">Class</label>
+            <select id="addClass" class="form-select" required>
+              <option value="AIML-A">AIML-A</option>
+              <option value="AIML-B">AIML-B</option>
+              <option value="AIML-C">AIML-C</option>
+              <option value="CYBER-A">CYBER-A</option>
+              <option value="CYBER-B">CYBER-B</option>
+              <option value="CYBER-C">CYBER-C</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="addHostel">Hostel Name</label>
+          <select id="addHostel" class="form-select" required>
+            <option value="Luxury Male Residency">Luxury Male Residency</option>
+            <option value="Golden Female Suites">Golden Female Suites</option>
+          </select>
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="addRoom">Room Number</label>
+            <input type="text" id="addRoom" class="form-input" placeholder="e.g. 101" required>
+          </div>
+          <div>
+            <label class="form-label" for="addBed">Bed Number</label>
+            <input type="text" id="addBed" class="form-input" placeholder="e.g. 1" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="addPhone">Phone Number</label>
+          <input type="tel" id="addPhone" class="form-input" placeholder="e.g. 9876543210" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="addStatus">Allocation Status</label>
+          <select id="addStatus" class="form-select">
+            <option value="allocated">Allocated</option>
+            <option value="waiting">Waiting</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('addModal')">Cancel</button>
+          <button type="submit" class="btn btn-gold">Save Allocation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT STUDENT ALLOCATION MODAL -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h2 class="modal-title">Edit Allocation details</h2>
+        <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+      </div>
+      <form id="editStudentForm">
+        <input type="hidden" id="editStudentId">
+        <div class="form-group">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="editNameDisplay" class="form-input" style="opacity: 0.6; cursor: not-allowed;" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Enrollment Number</label>
+          <input type="text" id="editEnrollDisplay" class="form-input" style="opacity: 0.6; cursor: not-allowed;" readonly>
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="editDept">Department</label>
+            <select id="editDept" class="form-select" required>
+              <option value="AIML">AIML</option>
+              <option value="CYBER">CYBER</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" for="editClass">Class</label>
+            <select id="editClass" class="form-select" required>
+              <option value="AIML-A">AIML-A</option>
+              <option value="AIML-B">AIML-B</option>
+              <option value="AIML-C">AIML-C</option>
+              <option value="CYBER-A">CYBER-A</option>
+              <option value="CYBER-B">CYBER-B</option>
+              <option value="CYBER-C">CYBER-C</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editHostel">Hostel Name</label>
+          <select id="editHostel" class="form-select" required>
+            <option value="Luxury Male Residency">Luxury Male Residency</option>
+            <option value="Golden Female Suites">Golden Female Suites</option>
+          </select>
+        </div>
+        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label class="form-label" for="editRoom">Room Number</label>
+            <input type="text" id="editRoom" class="form-input" required>
+          </div>
+          <div>
+            <label class="form-label" for="editBed">Bed Number</label>
+            <input type="text" id="editBed" class="form-input" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editPhone">Phone Number</label>
+          <input type="tel" id="editPhone" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editStatus">Allocation Status</label>
+          <select id="editStatus" class="form-select">
+            <option value="allocated">Allocated</option>
+            <option value="waiting">Waiting</option>
+            <option value="removed">Removed</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-outline" onclick="closeModal('editModal')">Cancel</button>
+          <button type="submit" class="btn btn-gold">Update Details</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- VIEW STUDENT DETAILS MODAL -->
+  <div id="viewModal" class="modal-overlay">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h2 class="modal-title">Student Allocation Details</h2>
+        <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
+      </div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">Student Name</span>
+          <span class="detail-value" id="viewName">Arjun Mehta</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Enrollment Number</span>
+          <span class="detail-value" id="viewEnroll">AIML2024001</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Department</span>
+          <span class="detail-value" id="viewDept">AIML</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Class</span>
+          <span class="detail-value" id="viewClass">AIML-A</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Hostel Name</span>
+          <span class="detail-value" id="viewHostel">Luxury Male Residency</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Room / Bed No.</span>
+          <span class="detail-value" id="viewRoomBed">101 / Bed 1</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Phone Number</span>
+          <span class="detail-value" id="viewPhone">9876543210</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Status</span>
+          <span class="detail-value" id="viewStatusBadge"><span class="badge badge-allocated">Allocated</span></span>
+        </div>
+        <div class="detail-item" style="grid-column: span 2; margin-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 15px;">
+          <span class="detail-label">Allocation Date</span>
+          <span class="detail-value" id="viewDate">June 8, 2026</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-gold" onclick="closeModal('viewModal')">Close View</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRMATION MODAL -->
+  <div id="deleteModal" class="modal-overlay">
+    <div class="modal-content glass confirm-modal-content">
+      <div class="confirm-icon">⚠️</div>
+      <h2 class="modal-title" style="margin-bottom: 10px; color: var(--red);">Delete Allocation</h2>
+      <p class="confirm-text">Are you sure you want to remove this hostel student allocation? This action is permanent and cannot be undone.</p>
+      <input type="hidden" id="deleteStudentId">
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button class="btn btn-outline" onclick="closeModal('deleteModal')">No, Keep It</button>
+        <button class="btn btn-danger" onclick="confirmDeleteAllocation()">Yes, Delete Allocation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API and Client Scripts -->
+  <script src="js/api.js"></script>
+  <script src="hostel.js"></script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Fees | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body class="erp-body page-transition">
+  <div class="erp-wrap">
+    <nav class="erp-nav">
+      <a href="student-dashboard.html" class="erp-logo">College<span>ERP</span></a>
+      <button class="erp-btn erp-btn-outline erp-btn-sm" onclick="logout('student-login.html')">Logout</button>
+    </nav>
+    <div class="erp-container" style="max-width:520px">
+      <h1 class="erp-page-title">Fee Payment</h1>
+      <p class="erp-page-sub">Complete your pending fee payment</p>
+      <div class="erp-card">
+        <div class="erp-error" id="error"></div>
+        <div class="erp-stat-row"><span>Pending Amount</span><span id="pending">—</span></div>
+        <div class="erp-form-group" style="margin-top:24px">
+          <label>Payment Amount (₹)</label>
+          <input type="number" class="erp-input" id="amount" min="1">
+        </div>
+        <button class="erp-btn erp-btn-gold erp-btn-block" id="payBtn">Pay Now</button>
+        <a href="student-dashboard.html" class="erp-back">Back to Dashboard</a>
+      </div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+    const user = requireRole('student', 'student-login.html');
+    let pendingAmt = 0;
+
+    async function init() {
+      const d = await StudentAPI.dashboard();
+      pendingAmt = d.fees.pending;
+      document.getElementById('pending').textContent = '₹' + pendingAmt.toLocaleString('en-IN');
+      document.getElementById('amount').value = pendingAmt;
+      if (pendingAmt <= 0) {
+        document.getElementById('payBtn').textContent = 'No Pending Fees';
+        document.getElementById('payBtn').disabled = true;
+      }
+    }
+
+    document.getElementById('payBtn').addEventListener('click', async () => {
+      const err = document.getElementById('error');
+      err.classList.remove('show');
+      
+      const amountVal = Number(document.getElementById('amount').value);
+      if (isNaN(amountVal) || amountVal <= 0 || amountVal > pendingAmt) {
+        err.textContent = "Please enter a valid amount between ₹1 and ₹" + pendingAmt;
+        err.classList.add('show');
+        return;
+      }
+      
+      try {
+        // 1. Create Razorpay order on backend
+        const orderData = await StudentAPI.createOrder(amountVal);
+        
+        // 2. Open Razorpay Checkout modal
+        const options = {
+          "key": orderData.key_id,
+          "amount": orderData.amount * 100, // paise
+          "currency": "INR",
+          "name": "SNAPCLASS College ERP",
+          "description": "Tuition Fee Payment",
+          "order_id": orderData.order_id,
+          "handler": async function (response) {
+            try {
+              // 3. Verify payment signature on backend
+              await StudentAPI.verifyPayment({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                amount: orderData.amount
+              });
+              alert('Fee payment of ₹' + amountVal.toLocaleString('en-IN') + ' completed and verified successfully!');
+              window.location.href = 'student-dashboard.html';
+            } catch (verifErr) {
+              err.textContent = "Signature verification failed: " + verifErr.message;
+              err.classList.add('show');
+            }
+          },
+          "prefill": {
+            "name": user.name
+          },
+          "theme": {
+            "color": "#D4AF37" // Premium Gold Color
+          }
+        };
+        
+        const rzp = new Razorpay(options);
+        rzp.on('payment.failed', function (response) {
+          err.textContent = "Payment failed: " + response.error.description;
+          err.classList.add('show');
+        });
+        rzp.open();
+        
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

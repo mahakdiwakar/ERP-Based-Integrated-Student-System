@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hostel Management | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+  <style>
+    .hostel-fee-card {
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      background: linear-gradient(135deg, rgba(15,15,15,0.9), rgba(30,30,30,0.8));
+    }
+    .roommate-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.03);
+      margin-bottom: 8px;
+    }
+    .roommate-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.8rem;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(12px);
+      z-index: 10000 !important;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: visible !important;
+    }
+    .modal.show { display: flex; }
+    .modal-content {
+      width: 100%;
+      max-width: 500px;
+      background: #0B0B0B !important;
+      border: 1px solid #D4AF37 !important;
+      border-radius: var(--radius);
+      padding: 32px;
+      position: relative;
+      z-index: 10005 !important;
+      overflow: visible !important;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.2), 0 10px 40px rgba(0, 0, 0, 0.8);
+    }
+    .erp-form-group {
+      position: relative !important;
+      overflow: visible !important;
+    }
+    select.erp-select {
+      background-color: #111111 !important;
+      color: #FFFFFF !important;
+      border: 1px solid #D4AF37 !important;
+      cursor: pointer !important;
+      appearance: none !important;
+      -webkit-appearance: none !important;
+      -moz-appearance: none !important;
+      background-image: url("data:image/svg+xml;utf8,<svg fill='%23D4AF37' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 12px center !important;
+      padding-right: 40px !important;
+      transition: var(--transition) !important;
+    }
+    select.erp-select:hover {
+      border-color: #F5E6A8 !important;
+      box-shadow: 0 0 12px rgba(212, 175, 55, 0.4) !important;
+    }
+    select.erp-select:focus {
+      outline: none !important;
+      border-color: #F5E6A8 !important;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.6) !important;
+    }
+    select.erp-select option {
+      background-color: #111111 !important;
+      color: #FFFFFF !important;
+      padding: 12px !important;
+    }
+  </style>
+</head>
+<body class="erp-body">
+  <div class="erp-wrap page-transition">
+    <nav class="erp-nav">
+      <a href="index.html" class="erp-logo">College<span>ERP</span></a>
+      <div class="erp-nav-right">
+        <div class="erp-user"><strong id="userName">User</strong><span id="userMeta"></span></div>
+        <a href="hostel-login.html" class="erp-btn erp-btn-outline erp-btn-sm" style="text-decoration:none;margin-right:8px;">← Login</a>
+        <button class="erp-btn erp-btn-outline erp-btn-sm" id="logoutBtn">Logout</button>
+      </div>
+    </nav>
+
+    <div class="erp-container">
+      <h1 class="erp-page-title">🏠 Hostel Management</h1>
+      <p class="erp-page-sub">Luxury Housing & Student Accommodation · <a href="hostel-login.html" style="color:var(--gold);text-decoration:none;font-size:0.85rem;">Back to Login</a></p>
+
+      <!-- ADMIN VIEW -->
+      <div id="adminView" style="display: none;">
+        <div class="erp-grid-4">
+          <div class="erp-card">
+            <h3 class="erp-card-title">🏢 Total Hostels</h3>
+            <div class="erp-pct" id="statHostels">0</div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">🚪 Total Rooms</h3>
+            <div class="erp-pct" id="statRooms">0</div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">👥 Occupied</h3>
+            <div class="erp-pct" id="statOccupied">0</div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">✨ Available</h3>
+            <div class="erp-pct" id="statAvailable">0</div>
+          </div>
+        </div>
+
+        <div class="erp-tabs" style="margin-top: 32px;">
+          <button class="erp-tab active" data-tab="allocations">Allocations</button>
+          <button class="erp-tab" data-tab="manage">Manage Hostels/Rooms</button>
+          <button class="erp-tab" data-tab="waiting">Waiting List</button>
+          <button class="erp-tab" data-tab="analytics">Analytics</button>
+        </div>
+
+        <!-- ALLOCATIONS PANEL -->
+        <div class="erp-panel active" id="panel-allocations">
+          <div class="erp-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 class="erp-card-title" style="margin-bottom: 0;">👥 Student Allocations</h3>
+              <button class="erp-btn erp-btn-gold erp-btn-sm" onclick="showModal('modalAllocate')">+ New Allocation</button>
+            </div>
+            <input type="text" class="erp-input erp-search" id="searchAllocations" placeholder="Search student or enrollment...">
+            <div class="erp-table-wrap">
+              <table class="erp-table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Enrollment No</th>
+                    <th>Department</th>
+                    <th>Hostel</th>
+                    <th>Room</th>
+                    <th>Floor/Bed</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="allocTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- MANAGE PANEL -->
+        <div class="erp-panel" id="panel-manage">
+          <div class="erp-grid-2">
+            <div class="erp-card">
+              <h3 class="erp-card-title">🏢 Create Hostel</h3>
+              <form id="formHostel">
+                <div class="erp-form-group"><label>Hostel Name</label><input class="erp-input" name="hostel_name" required></div>
+                <div class="erp-form-group">
+                  <label>Gender</label>
+                  <select class="erp-select" name="gender" required>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <button type="submit" class="erp-btn erp-btn-gold">Add Hostel</button>
+              </form>
+            </div>
+            <div class="erp-card">
+              <h3 class="erp-card-title">🚪 Create Rooms</h3>
+              <form id="formRoom">
+                <div class="erp-form-group">
+                  <label>Hostel</label>
+                  <select class="erp-select" name="hostel_id" id="roomHostelSelect" required></select>
+                </div>
+                <div class="erp-form-row">
+                  <div class="erp-form-group"><label>Room Number</label><input class="erp-input" name="room_number" required></div>
+                  <div class="erp-form-group"><label>Floor</label><input class="erp-input" type="number" name="floor" value="1" required></div>
+                </div>
+                <div class="erp-form-group"><label>Capacity (Beds)</label><input class="erp-input" type="number" name="capacity" value="4" required></div>
+                <button type="submit" class="erp-btn erp-btn-gold">Add Room</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- WAITING LIST -->
+        <div class="erp-panel" id="panel-waiting">
+          <div class="erp-card">
+            <h3 class="erp-card-title">⏳ Waiting List</h3>
+            <div class="erp-table-wrap">
+              <table class="erp-table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Enrollment No</th>
+                    <th>Hostel Preference</th>
+                    <th>Wait Since</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="waitingTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANALYTICS -->
+        <div class="erp-panel" id="panel-analytics">
+          <div class="erp-grid-2">
+            <div class="erp-card">
+              <h3 class="erp-card-title">📊 Occupancy by Hostel</h3>
+              <div id="hostelCharts"></div>
+            </div>
+            <div class="erp-card">
+              <h3 class="erp-card-title">🛌 Bed Availability</h3>
+              <div class="erp-pct" id="statBedPct">0%</div>
+              <p style="color:var(--muted)">Overall utilization of hostel capacity</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STUDENT VIEW -->
+      <div id="studentView" style="display: none;">
+        <div class="erp-grid-3">
+          <!-- Allocation Card -->
+          <div class="erp-card" id="studentAllocCard">
+            <h3 class="erp-card-title">🏠 Your Accommodation</h3>
+            <div id="allocInfo">
+              <div class="erp-pct" id="stRoom">Pending</div>
+              <div class="erp-stat-row"><span>Hostel</span><span id="stHostel">—</span></div>
+              <div class="erp-stat-row"><span>Floor</span><span id="stFloor">—</span></div>
+              <div class="erp-stat-row"><span>Bed Number</span><span id="stBed">—</span></div>
+              <div class="erp-stat-row"><span>Date</span><span id="stDate">—</span></div>
+              <div style="margin-top: 12px;"><span class="erp-badge" id="stStatus">Waiting</span></div>
+            </div>
+          </div>
+
+          <!-- Roommates -->
+          <div class="erp-card">
+            <h3 class="erp-card-title">🤝 Roommates</h3>
+            <div id="roommatesList">
+              <p style="color:var(--muted); font-size: 0.9rem;">Roommates will appear here once allocated.</p>
+            </div>
+          </div>
+
+          <!-- Hostel Fee -->
+          <div class="erp-card hostel-fee-card">
+            <h3 class="erp-card-title">💰 Hostel Fee</h3>
+            <div class="erp-stat-row"><span>Total Fee</span><span id="hFeeTotal">₹0</span></div>
+            <div class="erp-stat-row"><span>Paid</span><span id="hFeePaid">₹0</span></div>
+            <div class="erp-stat-row"><span>Pending</span><span id="hFeePending">₹0</span></div>
+            <div style="margin: 16px 0;"><span class="erp-badge" id="hFeeBadge">Pending</span></div>
+            <button class="erp-btn erp-btn-gold erp-btn-block" id="payHostelBtn">Pay Hostel Fee</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal" id="modalAllocate">
+    <div class="modal-content">
+      <h3 class="erp-card-title">Allocate Room</h3>
+      <form id="formAllocate">
+        <div class="erp-form-group">
+          <label>Student</label>
+          <select class="erp-select" name="student_id" id="studentSelect" required></select>
+        </div>
+        <div class="erp-form-group">
+          <label>Hostel (for Auto-Allocation)</label>
+          <select class="erp-select" name="hostel_id" id="hostelSelect"></select>
+        </div>
+        <p style="color:var(--muted); font-size: 0.8rem; margin: -10px 0 16px 0;">Leave Room empty for auto-allocation.</p>
+        <div class="erp-form-group">
+          <label>Specific Room (Optional)</label>
+          <select class="erp-select" name="room_id" id="roomSelect">
+            <option value="">Auto-Assign</option>
+          </select>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="submit" class="erp-btn erp-btn-gold erp-btn-block">Allocate</button>
+          <button type="button" class="erp-btn erp-btn-outline erp-btn-block" onclick="hideModal('modalAllocate')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal" id="modalChangeRoom">
+    <div class="modal-content">
+      <h3 class="erp-card-title">Change Room</h3>
+      <form id="formChangeRoom">
+        <input type="hidden" name="allocation_id" id="changeAllocId">
+        <div class="erp-form-group">
+          <label>Select New Room</label>
+          <select class="erp-select" name="new_room_id" id="changeRoomSelect" required></select>
+        </div>
+        <div style="display: flex; gap: 12px; margin-top: 24px;">
+          <button type="submit" class="erp-btn erp-btn-gold erp-btn-block">Update Room</button>
+          <button type="button" class="erp-btn erp-btn-outline erp-btn-block" onclick="hideModal('modalChangeRoom')">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/hostel.js"></script>
+</body>
+</html>

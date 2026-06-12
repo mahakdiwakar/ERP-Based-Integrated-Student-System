@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mark Attendance | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="css/erp.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="erp-body page-transition">
+  <div class="erp-wrap">
+    <nav class="erp-nav">
+      <a href="teacher-dashboard.html" class="erp-logo">College<span>ERP</span></a>
+      <button class="erp-btn erp-btn-outline erp-btn-sm" onclick="logout('teacher-login.html')">Logout</button>
+    </nav>
+    <div class="erp-container">
+      <h1 class="erp-page-title" id="title">Attendance</h1>
+      <p class="erp-page-sub">Select a date to mark attendance</p>
+      
+      <div class="attendance-date-nav">
+        <button class="erp-btn erp-btn-outline erp-btn-sm" id="prevDayBtn">&larr; Previous Day</button>
+        <div class="date-picker-wrap">
+          <input type="text" id="datePicker" class="erp-input" style="text-align:center; width: 160px; cursor: pointer;" readonly>
+        </div>
+        <button class="erp-btn erp-btn-outline erp-btn-sm" id="nextDayBtn">Next Day &rarr;</button>
+      </div>
+      <div class="erp-card">
+        <div class="erp-error" id="error"></div>
+        <div class="erp-table-wrap">
+          <table class="erp-table">
+            <thead><tr><th>Enrollment</th><th>Name</th><th>Status</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <button class="erp-btn erp-btn-gold" style="margin-top:24px" id="saveBtn">Save Attendance</button>
+      </div>
+    </div>
+    
+    <div id="toast" class="erp-toast"></div>
+  </div>
+  <style>
+    .erp-toast {
+      visibility: hidden;
+      min-width: 250px;
+      background-color: #0B0B0B;
+      color: #fff;
+      text-align: center;
+      border-radius: 8px;
+      padding: 16px;
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 0.9rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+    .erp-toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    }
+    .erp-toast.success { border-color: var(--green); color: var(--green); }
+    .erp-toast.error { border-color: var(--red); color: var(--red); }
+    @keyframes fadein {
+      from {bottom: 0; opacity: 0;}
+      to {bottom: 30px; opacity: 1;}
+    }
+    @keyframes fadeout {
+      from {bottom: 30px; opacity: 1;}
+      to {bottom: 0; opacity: 0;}
+    }
+    @keyframes luxury-scale-up {
+      from {
+        opacity: 0;
+        transform: scale(0.85);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+    .luxury-swal-popup {
+      border: 1px solid #D4AF37 !important;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.35) !important;
+      border-radius: 12px !important;
+      background: #0B0B0B !important;
+    }
+    .luxury-swal-popup.swal2-show {
+      animation: luxury-scale-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .luxury-swal-title {
+      color: #D4AF37 !important;
+      font-family: 'Playfair Display', serif !important;
+      font-size: 1.6rem !important;
+      font-weight: 700 !important;
+      padding-top: 15px !important;
+    }
+    .luxury-swal-html {
+      font-family: 'Inter', sans-serif !important;
+    }
+    .luxury-swal-btn {
+      font-family: 'Inter', sans-serif !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.5px !important;
+      border-radius: 6px !important;
+      padding: 10px 20px !important;
+      margin: 5px !important;
+    }
+    .error-swal-popup {
+      border: 1px solid var(--red, #EA3A3A) !important;
+      box-shadow: 0 0 30px rgba(234, 58, 58, 0.35) !important;
+      border-radius: 12px !important;
+      background: #0B0B0B !important;
+    }
+    .error-swal-popup.swal2-show {
+      animation: luxury-scale-up 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .error-swal-title {
+      color: var(--red, #EA3A3A) !important;
+      font-family: 'Playfair Display', serif !important;
+      font-size: 1.6rem !important;
+      font-weight: 700 !important;
+      padding-top: 15px !important;
+    }
+  </style>
+  <script src="js/api.js"></script>
+  <script>
+    const user = requireRole('teacher', 'teacher-login.html');
+    const params = new URLSearchParams(location.search);
+    const classId = params.get('class');
+    const className = params.get('name') || 'Class';
+    document.getElementById('title').textContent = 'Attendance — ' + className;
+
+    const statusMap = {};
+
+    function setStatus(id, status, btns) {
+      statusMap[id] = status;
+      btns.forEach(b => b.classList.remove('active'));
+      btns.find(b => b.dataset.status === status)?.classList.add('active');
+    }
+
+    let currentDate = new Date();
+    
+    function showToast(msg, type='success') {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.className = 'erp-toast show ' + type;
+      setTimeout(() => { toast.className = 'erp-toast'; }, 3000);
+    }
+    
+    const fp = flatpickr("#datePicker", {
+      defaultDate: currentDate,
+      maxDate: "today",
+      minDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+      dateFormat: "d-m-Y",
+      onChange: function(selectedDates, dateStr, instance) {
+        if (selectedDates.length > 0) {
+          currentDate = selectedDates[0];
+          load();
+        }
+      }
+    });
+
+    document.getElementById('prevDayBtn').addEventListener('click', () => {
+      let d = new Date(currentDate);
+      d.setDate(d.getDate() - 1);
+      if (d >= fp.config.minDate) {
+        fp.setDate(d);
+        currentDate = d;
+        load();
+      }
+    });
+
+    document.getElementById('nextDayBtn').addEventListener('click', () => {
+      let d = new Date(currentDate);
+      d.setDate(d.getDate() + 1);
+      let today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (d <= today) {
+        fp.setDate(d);
+        currentDate = d;
+        load();
+      }
+    });
+
+    function formatDateYMD(d) {
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    async function load() {
+      const dateStr = formatDateYMD(currentDate);
+      const { students } = await TeacherAPI.students(classId, dateStr);
+      document.getElementById('tbody').innerHTML = students.map(s => {
+        const st = s.status || 'present';
+        statusMap[s.id] = st;
+        return `<tr>
+          <td>${s.enrollment_number}</td>
+          <td>${s.name}</td>
+          <td>
+            <div class="attendance-toggle" data-id="${s.id}">
+              <button type="button" class="att-btn present ${st==='present'?'active':''}" data-status="present">Present</button>
+              <button type="button" class="att-btn absent ${st==='absent'?'active':''}" data-status="absent">Absent</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+
+      document.querySelectorAll('.attendance-toggle').forEach(row => {
+        const id = Number(row.dataset.id);
+        const btns = [...row.querySelectorAll('.att-btn')];
+        btns.forEach(b => b.addEventListener('click', () => setStatus(id, b.dataset.status, btns)));
+      });
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', async () => {
+      const err = document.getElementById('error');
+      err.classList.remove('show');
+      const saveBtn = document.getElementById('saveBtn');
+
+      // 1. Show loading popup immediately and disable button
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      Swal.fire({
+        title: 'Saving Attendance...',
+        html: 'Please wait while we record the attendance.',
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        background: '#0B0B0B',
+        color: '#FFFFFF',
+        customClass: {
+          popup: 'luxury-swal-popup',
+          title: 'luxury-swal-title'
+        },
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const start = Date.now();
+      try {
+        const attendance = Object.entries(statusMap).map(([student_id, status]) => ({
+          student_id: Number(student_id), status
+        }));
+        const dateStr = formatDateYMD(currentDate);
+        
+        const payload = {
+          teacher_id: Number(user.id),
+          class_id: Number(classId),
+          attendance_date: dateStr,
+          attendance: attendance
+        };
+        
+        const result = await TeacherAPI.saveAttendance(payload);
+        const duration = Date.now() - start;
+        console.log(`[PERF] Save attendance took ${duration}ms for ${attendance.length} students`);
+        
+        // 6. Show success popup instantly after response
+        Swal.fire({
+          title: '✅ Attendance Saved Successfully',
+          html: `
+            <div style="text-align: left; margin-top: 15px;">
+              <p style="margin-bottom: 12px; font-size: 1.05rem; color: #ccc;">Attendance for selected class has been recorded successfully.</p>
+              <div style="border-top: 1px solid rgba(212, 175, 55, 0.2); padding-top: 12px; margin-top: 12px; font-size: 0.95rem;">
+                <p style="margin: 6px 0;"><span style="color: #D4AF37; font-weight: 500;">Date:</span> ${dateStr}</p>
+                <p style="margin: 6px 0;"><span style="color: #D4AF37; font-weight: 500;">Class:</span> ${className}</p>
+                <p style="margin: 6px 0;"><span style="color: #D4AF37; font-weight: 500;">Students Updated:</span> ${attendance.length}</p>
+              </div>
+            </div>
+          `,
+          icon: 'success',
+          background: '#0B0B0B',
+          color: '#FFFFFF',
+          backdrop: 'rgba(0, 0, 0, 0.75)',
+          showConfirmButton: true,
+          confirmButtonText: 'Continue',
+          showDenyButton: true,
+          denyButtonText: 'Back to Dashboard',
+          confirmButtonColor: '#D4AF37',
+          denyButtonColor: '#222222',
+          customClass: {
+            popup: 'luxury-swal-popup',
+            title: 'luxury-swal-title',
+            htmlContainer: 'luxury-swal-html',
+            confirmButton: 'luxury-swal-btn erp-btn erp-btn-gold',
+            denyButton: 'luxury-swal-btn erp-btn erp-btn-outline'
+          },
+          timer: 3000,
+          timerProgressBar: true
+        }).then((resVal) => {
+          if (resVal.isDenied) {
+            location.href = 'teacher-dashboard.html';
+          }
+        });
+        
+        showToast(result.message || 'Attendance Saved Successfully', 'success');
+      } catch (ex) {
+        console.error(`[PERF] Save attendance failed after ${Date.now() - start}ms:`, ex);
+        // Show Luxury SweetAlert2 Error Popup
+        Swal.fire({
+          title: '❌ Attendance Save Failed',
+          text: ex.message,
+          icon: 'error',
+          background: '#0B0B0B',
+          color: '#FFFFFF',
+          backdrop: 'rgba(0, 0, 0, 0.75)',
+          confirmButtonColor: '#EA3A3A',
+          customClass: {
+            popup: 'error-swal-popup',
+            title: 'error-swal-title',
+            confirmButton: 'erp-btn erp-btn-outline'
+          }
+        });
+        showToast(ex.message, 'error');
+        err.textContent = ex.message;
+        err.classList.add('show');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Attendance';
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>

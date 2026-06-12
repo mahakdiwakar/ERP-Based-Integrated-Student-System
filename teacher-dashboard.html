@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Dashboard | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+</head>
+<body class="erp-body">
+  <div class="erp-wrap page-transition">
+    <nav class="erp-nav">
+      <a href="index.html" class="erp-logo">College<span>ERP</span></a>
+      <div class="erp-nav-right">
+        <div class="erp-user"><strong id="userName">Teacher</strong><span id="userId"></span></div>
+        <button class="erp-btn erp-btn-outline erp-btn-sm" onclick="logout('teacher-login.html')">Logout</button>
+      </div>
+    </nav>
+
+    <div class="erp-container">
+      <h1 class="erp-page-title">Teacher Dashboard</h1>
+      <p class="erp-page-sub">Manage attendance and marks for your assigned classes (max 5)</p>
+
+      <div class="erp-grid-2">
+        <div class="erp-card">
+          <h3 class="erp-card-title">📋 Attendance Management</h3>
+          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:8px">Select a class to mark today's attendance</p>
+          <div class="erp-class-list" id="attClasses"></div>
+        </div>
+        <div class="erp-card">
+          <h3 class="erp-card-title">📝 Marks Management</h3>
+          <p style="color:var(--muted);font-size:0.9rem;margin-bottom:8px">Enter mid sem marks by class and subject</p>
+          <div class="erp-class-list" id="marksClasses"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+    const user = requireRole('teacher', 'teacher-login.html');
+    if (!user) throw new Error('redirect');
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userId').textContent = user.loginId;
+
+    async function load() {
+      const { classes } = await TeacherAPI.classes();
+      const att = document.getElementById('attClasses');
+      const marks = document.getElementById('marksClasses');
+
+      if (!classes.length) {
+        att.innerHTML = '<p style="color:var(--muted)">No classes assigned</p>';
+        marks.innerHTML = att.innerHTML;
+        return;
+      }
+
+      att.innerHTML = classes.map(c =>
+        `<a class="erp-class-chip" href="teacher-attendance.html?class=${c.id}&name=${encodeURIComponent(c.name)}">${c.name}</a>`
+      ).join('');
+      marks.innerHTML = classes.map(c =>
+        `<a class="erp-class-chip" href="teacher-marks.html?class=${c.id}&name=${encodeURIComponent(c.name)}">${c.name}</a>`
+      ).join('');
+
+      document.querySelectorAll('.erp-card').forEach((card, i) => {
+        card.style.setProperty('--reveal-delay', `${i * 0.12}s`);
+        card.classList.add('card-reveal');
+      });
+    }
+    load();
+  </script>
+</body>
+</html>

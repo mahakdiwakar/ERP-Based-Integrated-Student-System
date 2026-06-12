@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart College ERP — Manage students, faculty, attendance, fees, exams and academic operations from one intelligent platform.">
+  <title>College ERP | Smart Education Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loader" class="loader">
+    <div class="loader-inner">
+      <div class="loader-logo">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="8" width="40" height="32" rx="4" stroke="#D4AF37" stroke-width="2"/>
+          <path d="M12 20h24M12 28h16" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="36" cy="28" r="4" fill="#D4AF37"/>
+        </svg>
+      </div>
+      <div class="loader-text">College ERP</div>
+      <div class="loader-bar"><div class="loader-progress"></div></div>
+      <p class="loader-sub">Initializing Smart Education Platform</p>
+    </div>
+  </div>
+
+  <!-- Mouse Glow -->
+  <div id="mouse-glow" class="mouse-glow" aria-hidden="true"></div>
+
+  <!-- Golden Light Rays -->
+  <div class="light-rays" aria-hidden="true">
+    <div class="ray ray-1"></div>
+    <div class="ray ray-2"></div>
+    <div class="ray ray-3"></div>
+  </div>
+
+  <!-- Floating Particles -->
+  <canvas id="particles" aria-hidden="true"></canvas>
+
+  <!-- Navbar -->
+  <header class="navbar" id="navbar">
+    <div class="container navbar-inner">
+      <a href="#" class="logo">
+        <svg class="logo-icon" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="6" width="36" height="28" rx="3" stroke="#D4AF37" stroke-width="1.5"/>
+          <path d="M10 16h20M10 22h14M10 28h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="30" cy="28" r="3" fill="#D4AF37"/>
+        </svg>
+        <span class="logo-text">College<span class="gold">ERP</span></span>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#home" class="nav-link active">Home</a>
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#departments" class="nav-link">Departments</a>
+        <a href="hostel.html" class="nav-link">Hostel</a>
+        <a href="#students" class="nav-link">Students</a>
+        <a href="#faculty" class="nav-link">Faculty</a>
+        <a href="#contact" class="nav-link">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="student-login.html" class="btn btn-ghost">Login</a>
+        <a href="admin-login.html" class="btn btn-gold">Register</a>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- Hero -->
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div class="hero-content" data-aos="fade-right" data-aos-duration="1000">
+          <div class="hero-badge">
+            <span class="badge-dot"></span>
+            Enterprise Education Platform
+          </div>
+          <h1 class="hero-title">
+            Smart College ERP.<br>
+            <span class="gold-text">Smarter Education.</span>
+          </h1>
+          <p class="hero-subtitle">
+            Manage Students, Teachers, Attendance, Fees, Exams,
+            Library and Academic Operations from one intelligent platform.
+          </p>
+          <div class="hero-cta">
+            <a href="#portals" class="btn btn-gold btn-lg">Get Started</a>
+            <a href="#features" class="btn btn-outline btn-lg">Explore Features</a>
+          </div>
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hero-stat-num">5000+</span>
+              <span class="hero-stat-label">Students</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-num">250+</span>
+              <span class="hero-stat-label">Faculty</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-num">100%</span>
+              <span class="hero-stat-label">Digital</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual" data-aos="fade-left" data-aos-duration="1000" data-aos-delay="200">
+          <div class="hero-building-wrap" id="heroBuilding">
+            <div class="building-glow"></div>
+            <svg class="building-svg" viewBox="0 0 500 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Ground -->
+              <ellipse cx="250" cy="400" rx="200" ry="15" fill="url(#groundGrad)" opacity="0.4"/>
+              <!-- Main Building -->
+              <rect x="120" y="120" width="260" height="260" rx="4" fill="url(#buildingGrad)" stroke="#D4AF37" stroke-width="1.5" opacity="0.9"/>
+              <!-- Columns -->
+              <rect x="140" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="180" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="220" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="260" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="300" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="340" y="140" width="20" height="220" fill="url(#columnGrad)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <!-- Windows -->
+              <g class="windows" opacity="0.8">
+                <rect x="165" y="160" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.6"/>
+                <rect x="205" y="160" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.8"/>
+                <rect x="245" y="160" width="12" height="18" rx="1" fill="#D4AF37" opacity="0.9"/>
+                <rect x="285" y="160" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.7"/>
+                <rect x="325" y="160" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.5"/>
+                <rect x="165" y="200" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.7"/>
+                <rect x="205" y="200" width="12" height="18" rx="1" fill="#D4AF37" opacity="0.9"/>
+                <rect x="245" y="200" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.6"/>
+                <rect x="285" y="200" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.8"/>
+                <rect x="325" y="200" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.6"/>
+                <rect x="165" y="240" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.5"/>
+                <rect x="205" y="240" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.7"/>
+                <rect x="245" y="240" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.8"/>
+                <rect x="285" y="240" width="12" height="18" rx="1" fill="#D4AF37" opacity="0.9"/>
+                <rect x="325" y="240" width="12" height="18" rx="1" fill="#F5E6A8" opacity="0.6"/>
+              </g>
+              <!-- Pediment -->
+              <path d="M110 120 L250 60 L390 120 Z" fill="url(#pedimentGrad)" stroke="#D4AF37" stroke-width="1.5"/>
+              <!-- Dome -->
+              <ellipse cx="250" cy="75" rx="30" ry="20" fill="url(#domeGrad)" stroke="#D4AF37" stroke-width="1"/>
+              <line x1="250" y1="55" x2="250" y2="35" stroke="#D4AF37" stroke-width="2"/>
+              <circle cx="250" cy="32" r="5" fill="#D4AF37"/>
+              <!-- Side wings -->
+              <rect x="60" y="180" width="60" height="200" rx="3" fill="url(#wingGrad)" stroke="rgba(212,175,55,0.4)" stroke-width="1"/>
+              <rect x="380" y="180" width="60" height="200" rx="3" fill="url(#wingGrad)" stroke="rgba(212,175,55,0.4)" stroke-width="1"/>
+              <!-- Steps -->
+              <rect x="180" y="380" width="140" height="8" rx="1" fill="rgba(212,175,55,0.2)" stroke="rgba(212,175,55,0.3)" stroke-width="0.5"/>
+              <rect x="190" y="388" width="120" height="8" rx="1" fill="rgba(212,175,55,0.15)" stroke="rgba(212,175,55,0.2)" stroke-width="0.5"/>
+              <!-- Light streaks -->
+              <line x1="250" y1="30" x2="250" y2="0" stroke="url(#streakGrad)" stroke-width="2" opacity="0.6"/>
+              <line x1="200" y1="50" x2="170" y2="10" stroke="url(#streakGrad)" stroke-width="1.5" opacity="0.4"/>
+              <line x1="300" y1="50" x2="330" y2="10" stroke="url(#streakGrad)" stroke-width="1.5" opacity="0.4"/>
+              <defs>
+                <linearGradient id="buildingGrad" x1="120" y1="120" x2="380" y2="380">
+                  <stop offset="0%" stop-color="#1a1a1a"/>
+                  <stop offset="100%" stop-color="#0a0a0a"/>
+                </linearGradient>
+                <linearGradient id="columnGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2a2a2a"/>
+                  <stop offset="100%" stop-color="#111"/>
+                </linearGradient>
+                <linearGradient id="pedimentGrad" x1="250" y1="60" x2="250" y2="120">
+                  <stop offset="0%" stop-color="#2a2210"/>
+                  <stop offset="100%" stop-color="#1a1a1a"/>
+                </linearGradient>
+                <linearGradient id="domeGrad" x1="220" y1="55" x2="280" y2="95">
+                  <stop offset="0%" stop-color="#D4AF37"/>
+                  <stop offset="100%" stop-color="#8B6914"/>
+                </linearGradient>
+                <linearGradient id="wingGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#151515"/>
+                  <stop offset="100%" stop-color="#0a0a0a"/>
+                </linearGradient>
+                <linearGradient id="groundGrad" x1="50" y1="400" x2="450" y2="400">
+                  <stop offset="0%" stop-color="transparent"/>
+                  <stop offset="50%" stop-color="#D4AF37"/>
+                  <stop offset="100%" stop-color="transparent"/>
+                </linearGradient>
+                <linearGradient id="streakGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#D4AF37" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#D4AF37"/>
+                  <stop offset="100%" stop-color="#F5E6A8"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="building-particles">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Portal Section -->
+    <section class="portals section" id="portals">
+      <div class="container reveal-section">
+        <div class="section-header">
+          <span class="section-tag">Access Portals</span>
+          <h2 class="section-title">Choose Your <span class="gold-text">Portal</span></h2>
+          <p class="section-desc">Secure role-based access for students, teachers, and administrators.</p>
+        </div>
+        <div class="portals-grid">
+          <div class="portal-card glass-card tilt-card">
+            <div class="portal-icon">
+              <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="16" r="8" stroke="#D4AF37" stroke-width="2"/><path d="M8 42c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Student Portal</h3>
+            <ul class="portal-features">
+              <li>Attendance</li>
+              <li>Results</li>
+              <li>Assignments</li>
+              <li>Fees</li>
+            </ul>
+            <a href="student-login.html" class="btn btn-gold btn-block">Student Login</a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="portal-card glass-card tilt-card featured">
+            <div class="portal-badge">Popular</div>
+            <div class="portal-icon">
+              <svg viewBox="0 0 48 48" fill="none"><rect x="8" y="12" width="32" height="24" rx="2" stroke="#D4AF37" stroke-width="2"/><path d="M16 20h16M16 26h12M16 32h8" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+            <h3>Teacher Portal</h3>
+            <ul class="portal-features">
+              <li>Attendance</li>
+              <li>Marks Entry</li>
+              <li>Assignments</li>
+              <li>Reports</li>
+            </ul>
+            <a href="teacher-login.html" class="btn btn-gold btn-block">Teacher Login</a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="portal-card glass-card tilt-card">
+            <div class="portal-icon">
+              <svg viewBox="0 0 48 48" fill="none"><path d="M24 6L42 16v16L24 42 6 32V16L24 6z" stroke="#D4AF37" stroke-width="2"/><circle cx="24" cy="24" r="6" stroke="#D4AF37" stroke-width="2"/></svg>
+            </div>
+            <h3>Admin Portal</h3>
+            <ul class="portal-features">
+              <li>Student Management</li>
+              <li>Faculty Management</li>
+              <li>Departments</li>
+              <li>System Control</li>
+            </ul>
+            <a href="admin-login.html" class="btn btn-gold btn-block">Admin Login</a>
+            <div class="card-shine"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ERP Modules -->
+    <section class="modules section" id="features">
+      <div class="container reveal-section">
+        <div class="section-header">
+          <span class="section-tag">ERP Modules</span>
+          <h2 class="section-title">Complete Academic <span class="gold-text">Ecosystem</span></h2>
+          <p class="section-desc">Eight powerful modules designed for modern university management.</p>
+        </div>
+        <div class="modules-grid">
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="6" stroke="#D4AF37" stroke-width="1.5"/><path d="M8 34c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h3>Student Management</h3>
+            <p>Complete student lifecycle from admission to graduation with digital records.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><rect x="6" y="8" width="28" height="24" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M14 16h12M14 22h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/><circle cx="28" cy="26" r="4" fill="#D4AF37" opacity="0.5"/></svg></div>
+            <h3>Attendance Management</h3>
+            <p>Real-time biometric and digital attendance tracking with instant notifications.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><path d="M8 32l8-12 6 8 10-16 8 20H8z" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+            <h3>Examination System</h3>
+            <p>End-to-end exam scheduling, grading, result publishing and analytics.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><rect x="8" y="12" width="24" height="16" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M8 18h24" stroke="#D4AF37" stroke-width="1.5"/><circle cx="28" cy="26" r="3" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h3>Fee Management</h3>
+            <p>Automated fee collection, receipts, reminders and financial reporting.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card" data-aos="fade-up" data-aos-delay="0">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><path d="M10 8h20v28H10z" stroke="#D4AF37" stroke-width="1.5"/><path d="M14 14h12M14 20h12M14 26h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h3>Library Management</h3>
+            <p>Digital catalog, issue/return tracking, and overdue management system.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><rect x="6" y="14" width="28" height="20" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M6 22h28M14 14V10a6 6 0 0112 0v4" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h3>Hostel Management</h3>
+            <p>Room allocation, mess management, and hostel fee tracking in one place.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="14" r="6" stroke="#D4AF37" stroke-width="1.5"/><path d="M8 34c0-6.627 5.373-12 12-12s12 5.373 12 12" stroke="#D4AF37" stroke-width="1.5"/><path d="M30 10l4 4-4 4" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h3>Faculty Management</h3>
+            <p>Faculty profiles, schedules, performance tracking and department mapping.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+          <div class="module-card glass-card tilt-card">
+            <div class="module-icon"><svg viewBox="0 0 40 40" fill="none"><rect x="8" y="12" width="24" height="20" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M16 22l4 4 8-8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            <h3>Placement Cell</h3>
+            <p>Company drives, student profiles, interview scheduling and placement analytics.</p>
+            <a href="#" class="module-link">Explore <span>&rarr;</span></a>
+            <div class="card-shine"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works section" id="departments">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">Process</span>
+          <h2 class="section-title">How It <span class="gold-text">Works</span></h2>
+          <p class="section-desc">Four simple steps to transform your college management.</p>
+        </div>
+        <div class="steps-container" data-aos="fade-up" data-aos-delay="100">
+          <div class="steps-line">
+            <div class="steps-line-progress"></div>
+          </div>
+          <div class="steps-grid">
+            <div class="step-card">
+              <div class="step-number">01</div>
+              <div class="step-icon">
+                <svg viewBox="0 0 40 40" fill="none"><rect x="8" y="12" width="24" height="20" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M16 22h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Login</h3>
+              <p>Secure authentication with role-based portal access.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">02</div>
+              <div class="step-icon">
+                <svg viewBox="0 0 40 40" fill="none"><rect x="6" y="8" width="28" height="24" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M6 16h28M14 24h12" stroke="#D4AF37" stroke-width="1.5"/></svg>
+              </div>
+              <h3>Access Dashboard</h3>
+              <p>Personalized dashboard with real-time insights.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">03</div>
+              <div class="step-icon">
+                <svg viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="12" stroke="#D4AF37" stroke-width="1.5"/><path d="M20 14v6l4 4" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <h3>Manage Activities</h3>
+              <p>Handle attendance, exams, fees and more seamlessly.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-number">04</div>
+              <div class="step-icon">
+                <svg viewBox="0 0 40 40" fill="none"><path d="M8 28l8-10 6 6 10-14 8 18H8z" stroke="#D4AF37" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              </div>
+              <h3>Generate Reports</h3>
+              <p>Export comprehensive analytics and reports instantly.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dashboard Preview -->
+    <section class="dashboard section" id="students">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">Analytics</span>
+          <h2 class="section-title">Dashboard <span class="gold-text">Preview</span></h2>
+          <p class="section-desc">Real-time insights at your fingertips with animated analytics.</p>
+        </div>
+        <div class="dashboard-grid" data-aos="fade-up" data-aos-delay="100">
+          <div class="dash-card glass-card">
+            <div class="dash-card-header">
+              <h4>Attendance Analytics</h4>
+              <span class="dash-badge up">+12%</span>
+            </div>
+            <div class="chart-bars" id="attendanceChart">
+              <div class="bar" data-value="85"><span>Mon</span></div>
+              <div class="bar" data-value="92"><span>Tue</span></div>
+              <div class="bar" data-value="78"><span>Wed</span></div>
+              <div class="bar" data-value="95"><span>Thu</span></div>
+              <div class="bar" data-value="88"><span>Fri</span></div>
+              <div class="bar" data-value="91"><span>Sat</span></div>
+            </div>
+          </div>
+          <div class="dash-card glass-card">
+            <div class="dash-card-header">
+              <h4>Fee Collection</h4>
+              <span class="dash-badge up">₹2.4Cr</span>
+            </div>
+            <div class="chart-line-wrap">
+              <svg class="chart-line" viewBox="0 0 300 120" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#D4AF37" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#D4AF37" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path class="chart-area" d="M0,100 L50,80 L100,60 L150,70 L200,40 L250,50 L300,20 L300,120 L0,120 Z" fill="url(#lineGrad)"/>
+                <path class="chart-path" d="M0,100 L50,80 L100,60 L150,70 L200,40 L250,50 L300,20" fill="none" stroke="#D4AF37" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+          <div class="dash-card glass-card">
+            <div class="dash-card-header">
+              <h4>Student Statistics</h4>
+            </div>
+            <div class="dash-stats-row">
+              <div class="dash-stat-item">
+                <span class="dash-stat-val counter" data-target="5247">0</span>
+                <span class="dash-stat-lbl">Enrolled</span>
+              </div>
+              <div class="dash-stat-item">
+                <span class="dash-stat-val counter" data-target="4891">0</span>
+                <span class="dash-stat-lbl">Active</span>
+              </div>
+              <div class="dash-stat-item">
+                <span class="dash-stat-val counter" data-target="356">0</span>
+                <span class="dash-stat-lbl">New</span>
+              </div>
+            </div>
+            <div class="donut-chart">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(212,175,55,0.15)" stroke-width="10"/>
+                <circle class="donut-segment" cx="50" cy="50" r="40" fill="none" stroke="#D4AF37" stroke-width="10" stroke-dasharray="188 251" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+              </svg>
+              <span class="donut-label">93%</span>
+            </div>
+          </div>
+          <div class="dash-card glass-card">
+            <div class="dash-card-header">
+              <h4>Exam Performance</h4>
+              <span class="dash-badge up">A+</span>
+            </div>
+            <div class="exam-bars">
+              <div class="exam-bar-row"><span>Computer Science</span><div class="exam-bar"><div class="exam-fill" data-width="92"></div></div><span>92%</span></div>
+              <div class="exam-bar-row"><span>Electronics</span><div class="exam-bar"><div class="exam-fill" data-width="87"></div></div><span>87%</span></div>
+              <div class="exam-bar-row"><span>Mechanical</span><div class="exam-bar"><div class="exam-fill" data-width="84"></div></div><span>84%</span></div>
+              <div class="exam-bar-row"><span>Civil</span><div class="exam-bar"><div class="exam-fill" data-width="79"></div></div><span>79%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Choose Us -->
+    <section class="why-choose section" id="faculty">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">Advantages</span>
+          <h2 class="section-title">Why <span class="gold-text">Choose Us</span></h2>
+          <p class="section-desc">Built for excellence with enterprise-grade reliability.</p>
+        </div>
+        <div class="why-grid">
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="0">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M16 4l12 6v8c0 6.627-5.373 12-12 12S4 24.627 4 18V10l12-6z" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h4>Secure System</h4>
+            <p>Bank-grade encryption and multi-layer security protocols.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="50">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M6 20l10-12 10 12H6z" stroke="#D4AF37" stroke-width="1.5"/><path d="M4 26h24" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h4>Cloud Based</h4>
+            <p>Access anywhere with 99.9% uptime guarantee.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="100">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#D4AF37" stroke-width="1.5"/><path d="M12 16h8M16 12v8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h4>AI Powered</h4>
+            <p>Intelligent insights and predictive analytics.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="150">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M4 16h24M16 4v24" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="16" r="12" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h4>Fast Performance</h4>
+            <p>Lightning-fast response under 200ms load time.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="0">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><rect x="6" y="8" width="20" height="18" rx="2" stroke="#D4AF37" stroke-width="1.5"/><path d="M12 16h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h4>Role Based Access</h4>
+            <p>Granular permissions for every user type.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="50">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M8 12h16v14H8z" stroke="#D4AF37" stroke-width="1.5"/><path d="M12 12V8a4 4 0 018 0v4" stroke="#D4AF37" stroke-width="1.5"/></svg></div>
+            <h4>Data Backup</h4>
+            <p>Automated daily backups with instant recovery.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="100">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="10" stroke="#D4AF37" stroke-width="1.5"/><path d="M16 10v6l4 4" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h4>24x7 Support</h4>
+            <p>Round-the-clock dedicated support team.</p>
+          </div>
+          <div class="why-card glass-card tilt-card" data-aos="zoom-in" data-aos-delay="150">
+            <div class="why-icon"><svg viewBox="0 0 32 32" fill="none"><path d="M6 8h20v18H6z" stroke="#D4AF37" stroke-width="1.5"/><path d="M10 14h12M10 18h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <h4>User Friendly</h4>
+            <p>Intuitive interface designed for all skill levels.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Statistics -->
+    <section class="statistics section">
+      <div class="container">
+        <div class="stats-grid" data-aos="fade-up">
+          <div class="stat-item">
+            <span class="stat-number counter" data-target="5000" data-suffix="+">0</span>
+            <span class="stat-label">Students</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number counter" data-target="250" data-suffix="+">0</span>
+            <span class="stat-label">Teachers</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number counter" data-target="20" data-suffix="+">0</span>
+            <span class="stat-label">Departments</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number counter" data-target="100" data-suffix="%">0</span>
+            <span class="stat-label">Digital ERP</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="testimonials section">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">Testimonials</span>
+          <h2 class="section-title">Trusted by <span class="gold-text">Leaders</span></h2>
+          <p class="section-desc">Hear from educators who transformed their institutions.</p>
+        </div>
+        <div class="testimonial-slider" data-aos="fade-up" data-aos-delay="100">
+          <div class="testimonial-track" id="testimonialTrack">
+            <div class="testimonial-card glass-card active">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"College ERP revolutionized our administrative workflow. Attendance tracking alone saved us 20 hours per week."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">DR</div>
+                <div>
+                  <strong>Dr. Rajesh Kumar</strong>
+                  <span>Principal, Apex Institute</span>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card glass-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"The fee management module reduced payment delays by 60%. Parents love the transparent digital receipts."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">PM</div>
+                <div>
+                  <strong>Prof. Meera Sharma</strong>
+                  <span>Dean, Tech University</span>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card glass-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"As a student, I can access everything — results, assignments, fees — from one portal. It's incredibly convenient."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">AS</div>
+                <div>
+                  <strong>Arjun Singh</strong>
+                  <span>Final Year, CSE</span>
+                </div>
+              </div>
+            </div>
+            <div class="testimonial-card glass-card">
+              <div class="testimonial-stars">★★★★★</div>
+              <p class="testimonial-text">"The examination system is flawless. From scheduling to result publishing, everything is automated and error-free."</p>
+              <div class="testimonial-author">
+                <div class="author-avatar">VK</div>
+                <div>
+                  <strong>Dr. Vikram Patel</strong>
+                  <span>HOD, Electronics</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="testimonial-dots" id="testimonialDots"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq section" id="contact">
+      <div class="container">
+        <div class="section-header" data-aos="fade-up">
+          <span class="section-tag">FAQ</span>
+          <h2 class="section-title">Frequently Asked <span class="gold-text">Questions</span></h2>
+          <p class="section-desc">Everything you need to know about College ERP.</p>
+        </div>
+        <div class="faq-list" data-aos="fade-up" data-aos-delay="100">
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>What is College ERP and who is it for?</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>College ERP is a comprehensive education management platform designed for colleges and universities. It serves students, teachers, and administrators with role-specific portals and modules.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>Is my data secure on the platform?</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Yes. We use bank-grade AES-256 encryption, regular security audits, automated daily backups, and role-based access control to ensure your data is always protected.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>Can I access the system from mobile devices?</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Absolutely. College ERP is fully responsive and works seamlessly on desktops, tablets, and smartphones with a dedicated mobile-optimized interface.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>How long does implementation take?</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Most institutions are fully operational within 2-4 weeks. Our dedicated onboarding team handles data migration, training, and configuration.</p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button class="faq-question" aria-expanded="false">
+              <span>Do you offer custom modules for specific needs?</span>
+              <svg class="faq-icon" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="faq-answer">
+              <p>Yes. We offer custom module development for institutions with unique requirements. Contact our team to discuss your specific needs.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta section">
+      <div class="container">
+        <div class="cta-container glass-card" data-aos="zoom-in">
+          <div class="cta-glow"></div>
+          <h2>Transform Your <span class="gold-text">College Management</span></h2>
+          <p>Join thousands of institutions already using College ERP to deliver smarter education.</p>
+          <div class="cta-buttons">
+            <a href="student-login.html" class="btn btn-gold btn-lg">Student Login</a>
+            <a href="teacher-login.html" class="btn btn-outline btn-lg">Teacher Login</a>
+            <a href="admin-login.html" class="btn btn-outline btn-lg">Admin Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="#" class="logo">
+            <svg class="logo-icon" viewBox="0 0 40 40" fill="none"><rect x="2" y="6" width="36" height="28" rx="3" stroke="#D4AF37" stroke-width="1.5"/><path d="M10 16h20M10 22h14M10 28h8" stroke="#D4AF37" stroke-width="1.5" stroke-linecap="round"/><circle cx="30" cy="28" r="3" fill="#D4AF37"/></svg>
+            <span class="logo-text">College<span class="gold">ERP</span></span>
+          </a>
+          <p>Smart College ERP for smarter education. Enterprise-grade platform for modern universities.</p>
+        </div>
+        <div class="footer-links">
+          <h5>Platform</h5>
+          <a href="#features">Features</a>
+          <a href="#portals">Portals</a>
+          <a href="#departments">Departments</a>
+        </div>
+        <div class="footer-links">
+          <h5>Resources</h5>
+          <a href="#">Documentation</a>
+          <a href="#">API</a>
+          <a href="#contact">Support</a>
+        </div>
+        <div class="footer-links">
+          <h5>Contact</h5>
+          <a href="mailto:info@collegeerp.com">info@collegeerp.com</a>
+          <a href="tel:+911800123456">+91 1800-123-456</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2026 College ERP. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

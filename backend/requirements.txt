@@ -1,0 +1,8 @@
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pyjwt>=2.8.0
+passlib[bcrypt]>=1.7.4
+razorpay>=1.4.1
+fpdf2>=2.7.8
+requests>=2.31.0
+python-dotenv>=1.0.1

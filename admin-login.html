@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+</head>
+<body class="erp-body page-transition">
+  <div class="erp-wrap erp-login-page">
+    <div class="erp-card erp-login-card">
+      <h1>Admin <span style="color:#D4AF37">Portal</span></h1>
+      <p class="sub">System administrator access</p>
+      <div class="erp-error" id="error"></div>
+      <form id="loginForm">
+        <div class="erp-form-group">
+          <label>Username</label>
+          <input type="text" class="erp-input" id="username" placeholder="admin" required autocomplete="username">
+        </div>
+        <div class="erp-form-group">
+          <label>Password</label>
+          <input type="password" class="erp-input" id="password" placeholder="Enter password" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="erp-btn erp-btn-gold erp-btn-block">Admin Login</button>
+      </form>
+      <a href="index.html" class="erp-back">&larr; Back to Home</a>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('error');
+      err.classList.remove('show');
+      try {
+        const data = await AuthAPI.adminLogin(
+          document.getElementById('username').value,
+          document.getElementById('password').value
+        );
+        saveSession(data);
+        window.location.href = 'admin-dashboard.html';
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>

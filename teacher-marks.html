@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marks Management | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+</head>
+<body class="erp-body marks-mgmt-page">
+  <div class="erp-wrap page-transition">
+    <nav class="erp-nav">
+      <a href="teacher-dashboard.html" class="erp-logo">College<span>ERP</span></a>
+      <div class="erp-nav-right">
+        <a href="teacher-dashboard.html" class="erp-btn erp-btn-outline erp-btn-sm">← Dashboard</a>
+        <button class="erp-btn erp-btn-outline erp-btn-sm" onclick="logout('teacher-login.html')">Logout</button>
+      </div>
+    </nav>
+
+    <div class="erp-container">
+      <h1 class="erp-page-title" id="title">Marks Management</h1>
+      <p class="erp-page-sub" id="subtitle">Select subject and enter mid sem marks (out of 20)</p>
+
+      <div class="erp-card marks-card marks-fade-in">
+        <div class="card-shine-bar" aria-hidden="true"></div>
+
+        <h3 class="erp-card-title">📝 Marks Entry</h3>
+
+        <!-- Custom subject dropdown -->
+        <div class="marks-subject-field">
+          <label class="marks-label" for="subjectTrigger">Subject</label>
+          <div class="custom-select" id="subjectSelect">
+            <button type="button" class="custom-select-trigger" id="subjectTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="custom-select-value" id="subjectValue">Select subject</span>
+              <svg class="custom-select-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <ul class="custom-select-menu" id="subjectMenu" role="listbox" hidden></ul>
+          </div>
+          <select class="erp-select-native" id="subject" aria-hidden="true" tabindex="-1"></select>
+        </div>
+
+        <div class="erp-error" id="error"></div>
+
+        <!-- Student marks table -->
+        <div class="marks-table-panel" id="tablePanel">
+          <div class="marks-table-scroll">
+            <table class="marks-table">
+              <thead>
+                <tr>
+                  <th>Enrollment No</th>
+                  <th>Student Name</th>
+                  <th class="marks-col-head">Marks (Out of 20)</th>
+                </tr>
+              </thead>
+              <tbody id="tbody">
+                <tr class="marks-empty-row">
+                  <td colspan="3">Select a subject to load students</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="marks-actions">
+          <button type="button" class="erp-btn erp-btn-outline erp-btn-lg btn-shine" id="resetBtn">Reset</button>
+          <button type="button" class="erp-btn erp-btn-gold erp-btn-lg btn-shine" id="saveBtn">Save Marks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/teacher-marks.js"></script>
+</body>
+</html>

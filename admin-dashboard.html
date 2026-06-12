@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/erp.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body class="erp-body">
+  <div class="erp-wrap page-transition">
+    <nav class="erp-nav">
+      <a href="index.html" class="erp-logo">College<span>ERP</span></a>
+      <div class="erp-nav-right">
+        <a href="hostel.html" class="erp-btn erp-btn-outline erp-btn-sm" style="margin-right: 12px;">Hostel Management</a>
+        <div class="erp-user"><strong>Administrator</strong><span id="adminName"></span></div>
+        <button class="erp-btn erp-btn-outline erp-btn-sm" onclick="logout('admin-login.html')">Logout</button>
+      </div>
+    </nav>
+
+    <div class="erp-container">
+      <h1 class="erp-page-title">Admin Dashboard</h1>
+      <p class="erp-page-sub">AIML & Cyber Security — Full System Control</p>
+
+      <div class="erp-tabs">
+        <button class="erp-tab active" data-tab="users">User Database</button>
+        <button class="erp-tab" data-tab="create">Create Users</button>
+        <button class="erp-tab" data-tab="analytics">Analytics Board</button>
+        <button class="erp-tab" data-tab="att">📊 Attendance Analytics</button>
+        <button class="erp-tab" data-tab="fees">💰 Fee Analytics</button>
+      </div>
+
+      <!-- USER DATABASE -->
+      <div class="erp-panel active" id="panel-users">
+        <div class="erp-card">
+          <h3 class="erp-card-title">👥 User Database</h3>
+          <input type="text" class="erp-input erp-search" id="searchUsers" placeholder="Search by name or ID...">
+          <div class="erp-table-wrap">
+            <table class="erp-table">
+              <thead><tr><th>Type</th><th>ID</th><th>Password</th><th>Name</th><th>Department</th><th>Actions</th></tr></thead>
+              <tbody id="usersTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE USERS -->
+      <div class="erp-panel" id="panel-create">
+        <div class="erp-grid-2">
+          <div class="erp-card">
+            <h3 class="erp-card-title">🎓 Create Student</h3>
+            <div class="erp-error" id="studentErr"></div>
+            <form id="createStudent">
+              <div class="erp-form-group"><label>Name</label><input class="erp-input" name="name" required></div>
+              <div class="erp-form-row">
+                <div class="erp-form-group"><label>Department</label>
+                  <select class="erp-select" name="department_code" required>
+                    <option value="AIML">AIML</option>
+                    <option value="CYBER">CYBER SECURITY</option>
+                  </select>
+                </div>
+                <div class="erp-form-group"><label>Class</label>
+                  <select class="erp-select" name="class_name" id="studentClass" required></select>
+                </div>
+              </div>
+              <div class="erp-form-group"><label>Enrollment Number</label><input class="erp-input" name="enrollment_number" required></div>
+              <div class="erp-form-group"><label>Password</label><input class="erp-input" name="password" type="password" required></div>
+              <button type="submit" class="erp-btn erp-btn-gold">Save Student</button>
+            </form>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">⚡ Bulk Demo Students</h3>
+            <p style="color:var(--muted);font-size:0.9rem;margin-bottom:16px">
+              Auto-generate <strong>300 students</strong> (6 classes × 50). Password: <code>student123</code>
+            </p>
+            <div class="erp-error" id="bulkErr"></div>
+            <div class="erp-success" id="bulkOk" style="display:none;margin-bottom:12px;padding:12px;border-radius:8px;background:rgba(34,197,94,0.1);color:#4ade80;font-size:0.9rem"></div>
+            <button type="button" class="erp-btn erp-btn-gold" id="generateDemoBtn">Generate Demo Students</button>
+            <p style="color:var(--muted);font-size:0.8rem;margin-top:12px">Runs once only — duplicate generation is blocked.</p>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">👨‍🏫 Create Teacher</h3>
+            <div class="erp-error" id="teacherErr"></div>
+            <form id="createTeacher">
+              <div class="erp-form-group"><label>Name</label><input class="erp-input" name="name" required></div>
+              <div class="erp-form-group"><label>Department</label>
+                <select class="erp-select" name="department_code" required>
+                  <option value="AIML">AIML</option>
+                  <option value="CYBER">CYBER SECURITY</option>
+                </select>
+              </div>
+              <div class="erp-form-group"><label>Teacher ID</label><input class="erp-input" name="teacher_id" required></div>
+              <div class="erp-form-group"><label>Password</label><input class="erp-input" name="password" type="password" required></div>
+              <div class="erp-form-group"><label>Assign Classes (max 5)</label>
+                <div id="teacherClasses" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+              </div>
+              <button type="submit" class="erp-btn erp-btn-gold">Save Teacher</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="erp-panel" id="panel-analytics">
+        <div class="erp-grid-2" style="margin-bottom:24px">
+          <div class="erp-card"><h3 class="erp-card-title">Attendance Overview</h3><div class="chart-box"><canvas id="attPie"></canvas></div></div>
+          <div class="erp-card"><h3 class="erp-card-title">Department Attendance</h3><div class="chart-box"><canvas id="attBar"></canvas></div></div>
+          <div class="erp-card"><h3 class="erp-card-title">Marks Trend</h3><div class="chart-box"><canvas id="marksLine"></canvas></div></div>
+          <div class="erp-card"><h3 class="erp-card-title">Department Comparison</h3><div class="chart-box"><canvas id="deptCompare"></canvas></div></div>
+        </div>
+        <div class="erp-card">
+          <h3 class="erp-card-title">📊 Summary</h3>
+          <div class="erp-grid-3" id="summaryStats"></div>
+          <h4 style="color:var(--gold);margin:24px 0 12px">Top Performers</h4>
+          <div class="erp-table-wrap">
+            <table class="erp-table">
+              <thead><tr><th>Name</th><th>Enrollment</th><th>Class</th><th>Attendance</th><th>Avg Marks</th></tr></thead>
+              <tbody id="topTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE ANALYTICS -->
+      <div class="erp-panel" id="panel-att">
+        <div class="erp-grid-3" style="margin-bottom:24px">
+          <div class="erp-card">
+            <h3 class="erp-card-title">🏢 Department Wise</h3>
+            <div class="chart-box"><canvas id="newAttDeptBar"></canvas></div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">📚 Class Wise</h3>
+            <div class="chart-box"><canvas id="newAttClassPie"></canvas></div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">📅 Monthly Trends</h3>
+            <div class="chart-box"><canvas id="newAttMonthLine"></canvas></div>
+          </div>
+        </div>
+        <div class="erp-card">
+          <h3 class="erp-card-title">👨‍🎓 Student Attendance</h3>
+          <div class="erp-table-wrap">
+            <table class="erp-table">
+              <thead><tr><th>Name</th><th>Class</th><th>Present</th><th>Total</th><th>Attendance %</th></tr></thead>
+              <tbody id="studentAttTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FEE ANALYTICS -->
+      <div class="erp-panel" id="panel-fees">
+        <!-- Summary Cards -->
+        <div class="erp-grid-4" id="feeStatCards" style="margin-bottom:24px;display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+          <div class="erp-card" style="text-align:center">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">TOTAL COLLECTED</div>
+            <div id="feeStatCollected" style="font-size:1.8rem;font-weight:700;color:#D4AF37">—</div>
+          </div>
+          <div class="erp-card" style="text-align:center">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">PENDING FEES</div>
+            <div id="feeStatPending" style="font-size:1.8rem;font-weight:700;color:#ef4444">—</div>
+          </div>
+          <div class="erp-card" style="text-align:center">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">PAID STUDENTS</div>
+            <div id="feeStatPaid" style="font-size:1.8rem;font-weight:700;color:#22c55e">—</div>
+          </div>
+          <div class="erp-card" style="text-align:center">
+            <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px">UNPAID STUDENTS</div>
+            <div id="feeStatUnpaid" style="font-size:1.8rem;font-weight:700;color:#f97316">—</div>
+          </div>
+        </div>
+        <!-- Charts -->
+        <div class="erp-grid-2" style="margin-bottom:24px">
+          <div class="erp-card">
+            <h3 class="erp-card-title">📈 Collection Trend</h3>
+            <div class="chart-box"><canvas id="feeTrendChart"></canvas></div>
+          </div>
+          <div class="erp-card">
+            <h3 class="erp-card-title">🏢 Department Wise Fees</h3>
+            <div class="chart-box"><canvas id="feeDeptChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script>
+    const user = requireRole('admin', 'admin-login.html');
+    if (user) document.getElementById('adminName').textContent = user.name;
+
+    let allUsers = [];
+    let allClasses = [];
+    const charts = {};
+
+    document.querySelectorAll('.erp-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.erp-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.erp-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+        if (tab.dataset.tab === 'analytics') loadAnalytics();
+        if (tab.dataset.tab === 'att') loadAttAnalytics();
+        if (tab.dataset.tab === 'fees') loadFeeAnalytics();
+      });
+    });
+
+    function renderUsers(filter = '') {
+      const q = filter.toLowerCase();
+      const rows = allUsers.filter(u =>
+        !q || u.name.toLowerCase().includes(q) || u.loginId.toLowerCase().includes(q)
+      );
+      document.getElementById('usersTable').innerHTML = rows.map(u => `
+        <tr>
+          <td>${u.type}</td>
+          <td>${u.loginId}</td>
+          <td>${u.password}</td>
+          <td>${u.name}</td>
+          <td>${u.department || '—'}</td>
+          <td>
+            <button class="erp-btn erp-btn-sm erp-btn-outline" onclick="editUser('${u.type}','${u.id}','${u.name}')">Edit</button>
+            <button class="erp-btn erp-btn-sm erp-btn-danger" onclick="deleteUser('${u.type}','${u.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('') || '<tr><td colspan="6">No users found</td></tr>';
+    }
+
+    async function loadUsers() {
+      const data = await AdminAPI.users();
+      allUsers = [...data.students, ...data.teachers];
+      renderUsers();
+    }
+
+    document.getElementById('searchUsers').addEventListener('input', e => renderUsers(e.target.value));
+
+    window.editUser = async (type, id, name) => {
+      const newName = prompt('New name:', name);
+      if (!newName) return;
+      const password = prompt('New password (leave blank to keep):');
+      await AdminAPI.updateUser(type, id, { name: newName, ...(password ? { password } : {}) });
+      loadUsers();
+    };
+
+    window.deleteUser = async (type, id) => {
+      if (!confirm('Delete this user permanently?')) return;
+      await AdminAPI.deleteUser(type, id);
+      loadUsers();
+    };
+
+    async function loadClasses() {
+      const { classes } = await AdminAPI.classes();
+      allClasses = classes;
+      document.getElementById('studentClass').innerHTML = classes.map(c =>
+        `<option value="${c.name}">${c.name}</option>`
+      ).join('');
+      document.getElementById('teacherClasses').innerHTML = classes.map(c =>
+        `<label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;color:var(--muted)">
+          <input type="checkbox" name="class" value="${c.name}" class="tc-check"> ${c.name}
+        </label>`
+      ).join('');
+    }
+
+    document.getElementById('generateDemoBtn').addEventListener('click', async () => {
+      const err = document.getElementById('bulkErr');
+      const ok = document.getElementById('bulkOk');
+      const btn = document.getElementById('generateDemoBtn');
+      err.classList.remove('show');
+      ok.style.display = 'none';
+      if (!confirm('Create 300 demo student accounts across AIML & CYBER classes?')) return;
+      btn.disabled = true;
+      btn.textContent = 'Generating...';
+      try {
+        const res = await AdminAPI.generateDemoStudents();
+        ok.innerHTML = `${res.message}<br><br><strong>Sample accounts:</strong><br>` +
+          (res.samples || []).map(s =>
+            `${s.enrollment_number} · ${s.name} · ${s.class_name} · ${s.email}`
+          ).join('<br>');
+        ok.style.display = 'block';
+        btn.textContent = 'Already Generated';
+        loadUsers();
+      } catch (ex) {
+        err.textContent = ex.message;
+        err.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Generate Demo Students';
+      }
+    });
+
+    document.getElementById('createStudent').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('studentErr');
+      err.classList.remove('show');
+      const fd = new FormData(e.target);
+      try {
+        await AdminAPI.createStudent(Object.fromEntries(fd));
+        e.target.reset();
+        alert('Student created!');
+        loadUsers();
+      } catch (ex) { err.textContent = ex.message; err.classList.add('show'); }
+    });
+
+    document.getElementById('createTeacher').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = document.getElementById('teacherErr');
+      err.classList.remove('show');
+      const fd = new FormData(e.target);
+      const class_names = [...document.querySelectorAll('.tc-check:checked')].map(c => c.value);
+      if (class_names.length > 5) { err.textContent = 'Maximum 5 classes allowed'; err.classList.add('show'); return; }
+      try {
+        await AdminAPI.createTeacher({ ...Object.fromEntries(fd), class_names });
+        e.target.reset();
+        document.querySelectorAll('.tc-check').forEach(c => c.checked = false);
+        alert('Teacher created!');
+        loadUsers();
+      } catch (ex) { err.textContent = ex.message; err.classList.add('show'); }
+    });
+
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: '#A1A1AA' } } },
+      scales: {
+        x: { ticks: { color: '#A1A1AA' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#A1A1AA' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    };
+
+    async function loadAnalytics() {
+      const d = await AdminAPI.analytics();
+
+      document.getElementById('summaryStats').innerHTML = `
+        <div><div class="erp-pct" style="font-size:1.5rem">${d.marksSummary.average}%</div><div style="color:var(--muted)">Average Marks</div></div>
+        <div><div class="erp-pct" style="font-size:1.5rem">${d.marksSummary.highest}%</div><div style="color:var(--muted)">Highest</div></div>
+        <div><div class="erp-pct" style="font-size:1.5rem">${d.marksSummary.lowest}%</div><div style="color:var(--muted)">Lowest</div></div>
+      `;
+
+      document.getElementById('topTable').innerHTML = d.topPerformers.map(s => `
+        <tr><td>${s.name}</td><td>${s.enrollment}</td><td>${s.class}</td><td>${s.attendancePct}%</td><td>${s.avgMarks}%</td></tr>
+      `).join('');
+
+      Object.values(charts).forEach(c => c.destroy());
+      charts.attPie = new Chart(document.getElementById('attPie'), {
+        type: 'pie',
+        data: {
+          labels: ['Present', 'Absent'],
+          datasets: [{ data: [d.attendanceChart.present, d.attendanceChart.absent], backgroundColor: ['#D4AF37', '#3f3f46'] }]
+        },
+        options: { ...chartDefaults, plugins: { legend: { labels: { color: '#A1A1AA' } } } }
+      });
+
+      charts.attBar = new Chart(document.getElementById('attBar'), {
+        type: 'bar',
+        data: {
+          labels: d.classWise.map(c => c.class),
+          datasets: [{ label: 'Avg Attendance %', data: d.classWise.map(c => c.avgAttendance), backgroundColor: '#D4AF37' }]
+        },
+        options: chartDefaults
+      });
+
+      charts.marksLine = new Chart(document.getElementById('marksLine'), {
+        type: 'line',
+        data: {
+          labels: d.marksTrend.map((_, i) => `#${i + 1}`),
+          datasets: [{ label: 'Mark %', data: d.marksTrend.map(m => m.percentage), borderColor: '#D4AF37', tension: 0.3, fill: false }]
+        },
+        options: chartDefaults
+      });
+
+      charts.deptCompare = new Chart(document.getElementById('deptCompare'), {
+        type: 'bar',
+        data: {
+          labels: d.departmentWise.map(x => x.department),
+          datasets: [
+            { label: 'Attendance %', data: d.departmentWise.map(x => x.avgAttendance), backgroundColor: '#D4AF37' },
+            { label: 'Avg Marks %', data: d.departmentWise.map(x => x.avgMarks), backgroundColor: '#F5E6A8' }
+          ]
+        },
+        options: chartDefaults
+      });
+    }
+
+    let attCharts = {};
+
+    async function loadAttAnalytics() {
+      const d = await AdminAPI.attendanceAnalytics();
+      
+      const deptKeys = Object.keys(d.departmentWise);
+      const classKeys = Object.keys(d.classWise);
+      const monthKeys = Object.keys(d.monthlyTrends).sort();
+      
+      const getPct = (o) => o.total > 0 ? Math.round((o.present / o.total) * 100) : 0;
+      
+      Object.values(attCharts).forEach(c => c.destroy());
+      
+      attCharts.dept = new Chart(document.getElementById('newAttDeptBar'), {
+        type: 'bar',
+        data: {
+          labels: deptKeys,
+          datasets: [{ label: 'Avg Attendance %', data: deptKeys.map(k => getPct(d.departmentWise[k])), backgroundColor: '#D4AF37' }]
+        },
+        options: chartDefaults
+      });
+
+      attCharts.cls = new Chart(document.getElementById('newAttClassPie'), {
+        type: 'pie',
+        data: {
+          labels: classKeys,
+          datasets: [{ data: classKeys.map(k => getPct(d.classWise[k])), backgroundColor: ['#D4AF37', '#eab308', '#f97316', '#22c55e', '#3f3f46'] }]
+        },
+        options: { ...chartDefaults, plugins: { legend: { labels: { color: '#A1A1AA' } } } }
+      });
+
+      attCharts.month = new Chart(document.getElementById('newAttMonthLine'), {
+        type: 'line',
+        data: {
+          labels: monthKeys,
+          datasets: [{ label: 'Avg Attendance %', data: monthKeys.map(k => getPct(d.monthlyTrends[k])), borderColor: '#D4AF37', fill: false }]
+        },
+        options: chartDefaults
+      });
+      
+      const studentHtml = (d.studentWise || []).map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>${s.class}</td>
+          <td>${s.present}</td>
+          <td>${s.total}</td>
+          <td><span class="erp-pct" style="font-size:1rem">${getPct(s)}%</span></td>
+        </tr>
+      `).join('');
+      document.getElementById('studentAttTable').innerHTML = studentHtml || '<tr><td colspan="5">No attendance records yet</td></tr>';
+    }
+
+    let feeCharts = {};
+
+    async function loadFeeAnalytics() {
+      const d = await AdminAPI.feeAnalytics();
+
+      function fmtInr(n) { return '\u20b9' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
+
+      document.getElementById('feeStatCollected').textContent = fmtInr(d.totalCollected);
+      document.getElementById('feeStatPending').textContent   = fmtInr(d.pendingFees);
+      document.getElementById('feeStatPaid').textContent      = d.paidStudents;
+      document.getElementById('feeStatUnpaid').textContent    = d.unpaidStudents;
+
+      Object.values(feeCharts).forEach(c => c.destroy());
+
+      // Collection Trend Line Chart
+      feeCharts.trend = new Chart(document.getElementById('feeTrendChart'), {
+        type: 'line',
+        data: {
+          labels: d.collectionTrend.map(t => t.date),
+          datasets: [{
+            label: 'Amount Collected (₹)',
+            data: d.collectionTrend.map(t => t.amount),
+            borderColor: '#D4AF37',
+            backgroundColor: 'rgba(212,175,55,0.1)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#D4AF37',
+            pointRadius: 4
+          }]
+        },
+        options: { ...chartDefaults }
+      });
+
+      // Department Wise Fees Bar Chart
+      feeCharts.dept = new Chart(document.getElementById('feeDeptChart'), {
+        type: 'bar',
+        data: {
+          labels: d.departmentWise.map(x => x.department),
+          datasets: [
+            { label: 'Collected (₹)', data: d.departmentWise.map(x => x.collected), backgroundColor: '#D4AF37' },
+            { label: 'Pending (₹)',   data: d.departmentWise.map(x => x.pending),   backgroundColor: '#ef4444' }
+          ]
+        },
+        options: { ...chartDefaults }
+      });
+    }
+
+    loadUsers();
+    loadClasses();
+    document.querySelectorAll('#panel-users .erp-card').forEach((card, i) => {
+      card.style.setProperty('--reveal-delay', `${i * 0.08}s`);
+      card.classList.add('card-reveal');
+    });
+  </script>
+</body>
+</html>
