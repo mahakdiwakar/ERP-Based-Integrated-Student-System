@@ -26,8 +26,7 @@ app = FastAPI(title="SNS College ERP API", version="1.0.0")
 # Setup CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3001", "http://127.0.0.1:3001", "null"],
-    allow_origin_regex="https?://.*",
+    allow_origins=["*"],  # More permissive for production behind a proxy
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

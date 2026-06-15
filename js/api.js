@@ -1,18 +1,6 @@
-// Use Express backend on :3001 or FastAPI on :8000
-const API_BASE = (() => {
-  const { protocol, hostname, port } = window.location;
-  if (port === '8000') return '/api';
-  if (!port || port === '3001') return '/api';
-  return `${protocol}//${hostname}:3001/api`;
-})();
-
-const FASTAPI_BASE = (() => {
-  const { protocol, hostname } = window.location;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//${hostname}:8000/api`;
-  }
-  return 'https://college-erp-system-t5s0.onrender.com';
-})();
+// Use relative path for API calls in production
+const API_BASE = '/api';
+const FASTAPI_BASE = '/api';
 
 async function api(path, options = {}, useFastAPI = false) {
   const token = localStorage.getItem('erp_token');

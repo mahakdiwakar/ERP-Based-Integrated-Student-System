@@ -1,4 +1,18 @@
-node_modules/
+# Production .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+.env
 .env.local
-.insforge/project.json
+.env.development
+.env.production
+.vscode/
+.idea/
 *.log
+node_modules/
+.insforge/
+.DS_Store

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # College ERP — SNAPCLASS
 
 Luxury Black + Gold College ERP with Student, Teacher, and Admin portals.
@@ -66,3 +67,6 @@ Tables: `college_departments`, `college_classes`, `college_subjects`, `college_s
 - Role-based access: student / teacher / admin
 - Teachers limited to 5 assigned classes
 - Students see only their own data
+=======
+# ERP-Based-Integrated-Student-System
+>>>>>>> d0a0a8b74ba11442c94a04dd696e0f195d860536
