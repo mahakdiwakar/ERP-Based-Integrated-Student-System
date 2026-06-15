@@ -6,12 +6,13 @@ const API_BASE = (() => {
   return `${protocol}//${hostname}:3001/api`;
 })();
 
-// const FASTAPI_BASE = (() => {
-//   const { protocol, hostname } = window.location;
-//   return `${protocol}//${hostname}:8000/api`;
-// })();
-
-const FASTAPI_BASE = 'https://college-erp-system-t5s0.onrender.com';
+const FASTAPI_BASE = (() => {
+  const { protocol, hostname } = window.location;
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:8000/api`;
+  }
+  return 'https://college-erp-system-t5s0.onrender.com';
+})();
 
 async function api(path, options = {}, useFastAPI = false) {
   const token = localStorage.getItem('erp_token');
