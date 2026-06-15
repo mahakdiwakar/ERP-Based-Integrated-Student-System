@@ -22,6 +22,7 @@ This project is configured for a **Unified Deployment** on Render. A single Fast
     | :--- | :--- |
     | `INSFORGE_URL` | Your Supabase/InsForge Project URL. |
     | `INSFORGE_API_KEY` | Your Supabase/InsForge Service Role or Anon Key. |
+    | `JWT_SECRET` | A secure random string for signing JWT tokens. |
     | `RAZORPAY_KEY_ID` | (Optional) Razorpay Key ID for payments. |
     | `RAZORPAY_KEY_SECRET` | (Optional) Razorpay Secret Key for payments. |
     | `PYTHON_VERSION` | Set to `3.11.0` (included in `render.yaml`). |
