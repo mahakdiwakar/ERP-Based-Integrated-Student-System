@@ -229,6 +229,21 @@ analytics_cache = ResponseCache(ttl_seconds=10.0)
 #     return user_data
 
 
+# def query_user(table: str, id_field: str, id_value: str, role: str, token_fields_fn):
+#     print("QUERY TABLE:", table)
+#     print("QUERY FIELD:", id_field)
+#     print("QUERY VALUE:", id_value)
+
+#     res = from_table(table).select("*").eq(id_field, id_value).maybe_single().execute()
+
+#     print("DB RESPONSE:", res)
+
+#     if res["error"] or not res["data"]:
+#         return None
+
+#     return res["data"]
+
+
 def query_user(table: str, id_field: str, id_value: str, role: str, token_fields_fn):
     print("QUERY TABLE:", table)
     print("QUERY FIELD:", id_field)
@@ -242,6 +257,8 @@ def query_user(table: str, id_field: str, id_value: str, role: str, token_fields
         return None
 
     return res["data"]
+
+
 
 # --- Auth Endpoints ---
 
