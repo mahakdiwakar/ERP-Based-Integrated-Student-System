@@ -13,14 +13,27 @@ from pydantic import BaseModel, Field
 import razorpay
 
 # Import custom helpers
-from db_helper import from_table
-from auth_utils import (
+
+# from db_helper import from_table
+# from auth_utils import (
+#     hash_password, verify_password, sign_token, require_role, get_current_user,
+#     get_current_admin, sign_access_token, sign_refresh_token, verify_refresh_token,
+#     ADMIN_ROLES
+# )
+# from receipt_pdf import generate_receipt_pdf
+# from demo_students import bulk_insert_demo_students, generate_demo_student_records
+
+from backend.db_helper import from_table
+from backend.auth_utils import (
     hash_password, verify_password, sign_token, require_role, get_current_user,
     get_current_admin, sign_access_token, sign_refresh_token, verify_refresh_token,
     ADMIN_ROLES
 )
-from receipt_pdf import generate_receipt_pdf
-from demo_students import bulk_insert_demo_students, generate_demo_student_records
+from backend.receipt_pdf import generate_receipt_pdf
+from backend.demo_students import (
+    bulk_insert_demo_students,
+    generate_demo_student_records
+)
 
 # Setup directories
 BASE_DIR = Path(__file__).resolve().parent.parent

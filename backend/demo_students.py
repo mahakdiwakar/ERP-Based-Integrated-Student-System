@@ -1,7 +1,9 @@
 """Bulk demo student generation for FastAPI."""
 
-from auth_utils import hash_password
-from db_helper import from_table
+# from auth_utils import hash_password
+from backend.auth_utils import hash_password
+# from db_helper import from_table
+from backend.db_helper import from_table
 
 DEMO_PASSWORD = "student123"
 STUDENTS_PER_CLASS = 50
