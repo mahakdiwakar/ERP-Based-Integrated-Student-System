@@ -283,37 +283,54 @@ async def teacher_login(payload: TeacherLoginPayload):
         "user": token_payload
     }
 
+# @app.post("/api/admin/login")
+# async def admin_login(payload: AdminLoginPayload):
+#     username = payload.username.strip().lower()
+#     user_data = query_user("college_admins", "username", username, "admin", None)
+#     if not user_data or not verify_password(payload.password, user_data["password_hash"]):
+#         raise HTTPException(status_code=401, detail="Invalid credentials")
+
+#     # Assign role: 'admin' username gets super_admin, others get college_admin.
+#     # Both are in ADMIN_ROLES so all /api/admin/* endpoints will accept them.
+#     role = "super_admin" if username == "admin" else "college_admin"
+#     token_payload = {
+#         "role": role,
+#         "id": user_data["id"],
+#         "loginId": user_data["username"],
+#         "name": user_data["name"]
+#     }
+
+#     print(f"[AUTH] Admin login OK — username='{username}' assigned role='{role}'")
+#     access_token = sign_access_token(token_payload)
+#     refresh_token = sign_refresh_token(token_payload)
+#     return {
+#         "success": True,
+#         "token": access_token,
+#         "accessToken": access_token,
+#         "refreshToken": refresh_token,
+#         "role": role,
+#         "user": token_payload
+#     }
+
 @app.post("/api/admin/login")
 async def admin_login(payload: AdminLoginPayload):
     username = payload.username.strip().lower()
+
     user_data = query_user("college_admins", "username", username, "admin", None)
+
+    print("USERNAME:", username)
+    print("USER_DATA:", user_data)
+
+    if user_data:
+        print("DB HASH:", user_data.get("password_hash"))
+        print("VERIFY RESULT:", verify_password(payload.password, user_data["password_hash"]))
+
     if not user_data or not verify_password(payload.password, user_data["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-
-    # Assign role: 'admin' username gets super_admin, others get college_admin.
-    # Both are in ADMIN_ROLES so all /api/admin/* endpoints will accept them.
-    role = "super_admin" if username == "admin" else "college_admin"
-    token_payload = {
-        "role": role,
-        "id": user_data["id"],
-        "loginId": user_data["username"],
-        "name": user_data["name"]
-    }
-
-    print(f"[AUTH] Admin login OK — username='{username}' assigned role='{role}'")
-    access_token = sign_access_token(token_payload)
-    refresh_token = sign_refresh_token(token_payload)
-    return {
-        "success": True,
-        "token": access_token,
-        "accessToken": access_token,
-        "refreshToken": refresh_token,
-        "role": role,
-        "user": token_payload
-    }
-
 class RefreshTokenPayload(BaseModel):
     refresh_token: str
+
+
 
 @app.post("/api/auth/refresh")
 async def refresh_token_endpoint(payload: RefreshTokenPayload):
