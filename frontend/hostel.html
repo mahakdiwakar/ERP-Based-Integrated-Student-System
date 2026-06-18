@@ -90,6 +90,11 @@
       padding: 12px !important;
     }
   </style>
+  <script src="js/api.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>
+    AuthGuard.protect(['hostel_admin', 'warden', 'super_admin', 'college_admin', 'student']);
+  </script>
 </head>
 <body class="erp-body">
   <div class="erp-wrap page-transition">
@@ -318,7 +323,10 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
   <script src="js/hostel.js"></script>
+  <script>
+    AuthGuard.startInactivityTimer();
+    AuthGuard.syncTabs();
+  </script>
 </body>
 </html>

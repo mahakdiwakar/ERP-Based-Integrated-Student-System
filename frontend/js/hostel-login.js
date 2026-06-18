@@ -178,25 +178,26 @@ document.getElementById('wardenForm').addEventListener('submit', async function 
   setBtnLoading('wardenSubmit', true);
 
   try {
-    // Wardens share the admin login endpoint
-    const data = await AuthAPI.adminLogin(username, password);
+    // Hostel login uses /api/hostel/login which assigns hostel_admin role
+    const res = await fetch('/api/hostel/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Login failed. Please check your credentials.');
 
-    saveSession(data);
+    // Save session with remember-me routing (sessionStorage vs localStorage)
+    saveSession(data, remember);
     saveWardenCredentials(username, password, remember);
 
-    // Override stored role to 'warden' so hostel.html can distinguish
-    const user = getUser() || {};
-    user.hostelRole = 'warden';
-    localStorage.setItem('erp_user', JSON.stringify(user));
-
-    showToast('Welcome, Warden! Redirecting…', 'success');
-    setTimeout(() => { window.location.href = 'hostel-dashboard.html'; }, 1200);
+    showToast('Welcome, Hostel Admin! Redirecting…', 'success');
+    setTimeout(() => { window.location.replace('hostel-dashboard.html'); }, 1200);
 
   } catch (err) {
     const msg = err.message || 'Login failed. Please check your credentials.';
     setError('wardenError', msg);
     showToast(msg, 'error');
-    // Shake the card
     document.getElementById('wardenCard').style.animation = 'none';
     requestAnimationFrame(() => {
       document.getElementById('wardenCard').style.animation = 'shake 0.45s ease';
@@ -227,16 +228,12 @@ if (studentForm) {
     try {
       const data = await AuthAPI.studentLogin(enrollment, password);
 
-      saveSession(data);
+      // Save session with remember-me routing (sessionStorage vs localStorage)
+      saveSession(data, remember);
       saveStudentCredentials(enrollment, password, remember);
 
-      // Tag with hostelRole for hostel.html
-      const user = getUser() || {};
-      user.hostelRole = 'student';
-      localStorage.setItem('erp_user', JSON.stringify(user));
-
       showToast('Welcome! Loading your hostel details…', 'success');
-      setTimeout(() => { window.location.href = 'hostel.html?role=student'; }, 1200);
+      setTimeout(() => { window.location.replace('hostel.html?role=student'); }, 1200);
 
     } catch (err) {
       const msg = err.message || 'Login failed. Please check your enrollment number and password.';
@@ -267,16 +264,34 @@ if (studentForm) {
   document.head.appendChild(style);
 })();
 
-/* ── If user is already logged in, redirect straight to hostel ── */
-(function checkExistingSession() {
-  const user = getUser();
-  if (!user) return;
-  const role = user.hostelRole || user.role;
-  if (role === 'student') {
-    window.location.href = 'hostel.html?role=student';
-  } else if (role === 'admin' || role === 'warden') {
-    window.location.href = 'hostel-dashboard.html';
+/* ── Show expired session alert if redirected with ?expired=true ── */
+(function checkExpiredParam() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('expired') === 'true') {
+    showToast('Session Expired. Please Login Again.', 'error', 5000);
+    // Remove the query param from URL without reload
+    history.replaceState(null, '', window.location.pathname);
   }
+})();
+
+/* ── If user is already logged in with a valid token, redirect to dashboard ── */
+(function checkExistingSession() {
+  const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
+  if (!token) return;
+
+  // Validate token is not expired
+  try {
+    const base64Url = token.split('.')[1];
+    const payload = JSON.parse(atob(base64Url.replace(/-/g, '+').replace(/_/g, '/')));
+    if (!payload.exp || (payload.exp * 1000) < Date.now()) return;
+
+    const role = payload.role;
+    if (role === 'student') {
+      window.location.replace('hostel.html?role=student');
+    } else if (['hostel_admin', 'warden', 'super_admin', 'college_admin', 'admin'].includes(role)) {
+      window.location.replace('hostel-dashboard.html');
+    }
+  } catch (_) { /* ignore malformed tokens */ }
 })();
 
 /* ── Load saved credentials on page ready ── */

@@ -14,7 +14,11 @@ import razorpay
 
 # Import custom helpers
 from db_helper import from_table
-from auth_utils import hash_password, verify_password, sign_token, require_role, get_current_user
+from auth_utils import (
+    hash_password, verify_password, sign_token, require_role, get_current_user,
+    get_current_admin, sign_access_token, sign_refresh_token, verify_refresh_token,
+    ADMIN_ROLES
+)
 from receipt_pdf import generate_receipt_pdf
 from demo_students import bulk_insert_demo_students, generate_demo_student_records
 
@@ -22,6 +26,26 @@ from demo_students import bulk_insert_demo_students, generate_demo_student_recor
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 app = FastAPI(title="SNS College ERP API", version="1.0.0")
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.endswith(".html") or path == "/" or path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    # Log 401/403 responses for debugging
+    status = response.status_code
+    if status in (401, 403):
+        auth_header = request.headers.get("authorization", "<missing>")
+        token_hint = auth_header[:40] + "..." if len(auth_header) > 40 else auth_header
+        print(
+            f"[AUTH-MIDDLEWARE] {status} on {request.method} {path} "
+            f"| Authorization: {token_hint}"
+        )
+    return response
 
 # Setup CORS
 app.add_middleware(
@@ -151,7 +175,37 @@ class HostelStudentPayload(BaseModel):
     allocation_status: Optional[str] = "allocated"
 
 
-# --- Helper Methods ---
+# --- Helper Methods & Caching ---
+
+import time
+
+class ResponseCache:
+    def __init__(self, ttl_seconds: float = 10.0):
+        self.ttl = ttl_seconds
+        self.cache = {}
+
+    def get(self, key: str):
+        if key in self.cache:
+            val, expiry = self.cache[key]
+            if time.time() < expiry:
+                print(f"[CACHE] Hit for key '{key}'")
+                return val
+            else:
+                print(f"[CACHE] Expired for key '{key}'")
+                del self.cache[key]
+        return None
+
+    def set(self, key: str, val):
+        self.cache[key] = (val, time.time() + self.ttl)
+        print(f"[CACHE] Set key '{key}' with TTL {self.ttl}s")
+
+    def clear(self):
+        self.cache.clear()
+        print("[CACHE] Cleared all cache entries")
+
+# Global caches
+analytics_cache = ResponseCache(ttl_seconds=10.0)
+
 
 def query_user(table: str, id_field: str, id_value: str, role: str, token_fields_fn):
     res = from_table(table).select("*").eq(id_field, id_value).maybe_single().execute()
@@ -179,10 +233,13 @@ async def student_login(payload: StudentLoginPayload):
         "class_id": user_data["class_id"]
     }
     
-    token = sign_token(token_payload)
+    access_token = sign_access_token(token_payload)
+    refresh_token = sign_refresh_token(token_payload)
     return {
         "success": True,
-        "token": token,
+        "token": access_token,
+        "accessToken": access_token,
+        "refreshToken": refresh_token,
         "role": "student",
         "user": token_payload
     }
@@ -202,10 +259,13 @@ async def teacher_login(payload: TeacherLoginPayload):
         "department_id": user_data["department_id"]
     }
     
-    token = sign_token(token_payload)
+    access_token = sign_access_token(token_payload)
+    refresh_token = sign_refresh_token(token_payload)
     return {
         "success": True,
-        "token": token,
+        "token": access_token,
+        "accessToken": access_token,
+        "refreshToken": refresh_token,
         "role": "teacher",
         "user": token_payload
     }
@@ -216,21 +276,60 @@ async def admin_login(payload: AdminLoginPayload):
     user_data = query_user("college_admins", "username", username, "admin", None)
     if not user_data or not verify_password(payload.password, user_data["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
+    # Assign role: 'admin' username gets super_admin, others get college_admin.
+    # Both are in ADMIN_ROLES so all /api/admin/* endpoints will accept them.
+    role = "super_admin" if username == "admin" else "college_admin"
     token_payload = {
-        "role": "admin",
+        "role": role,
         "id": user_data["id"],
         "loginId": user_data["username"],
         "name": user_data["name"]
     }
-    
-    token = sign_token(token_payload)
+
+    print(f"[AUTH] Admin login OK — username='{username}' assigned role='{role}'")
+    access_token = sign_access_token(token_payload)
+    refresh_token = sign_refresh_token(token_payload)
     return {
         "success": True,
-        "token": token,
-        "role": "admin",
+        "token": access_token,
+        "accessToken": access_token,
+        "refreshToken": refresh_token,
+        "role": role,
         "user": token_payload
     }
+
+class RefreshTokenPayload(BaseModel):
+    refresh_token: str
+
+@app.post("/api/auth/refresh")
+async def refresh_token_endpoint(payload: RefreshTokenPayload):
+    try:
+        decoded = verify_refresh_token(payload.refresh_token)
+        user_payload = {
+            "role": decoded.get("role"),
+            "id": decoded.get("id"),
+            "loginId": decoded.get("loginId"),
+            "name": decoded.get("name")
+        }
+        if "department_id" in decoded:
+            user_payload["department_id"] = decoded["department_id"]
+        if "class_id" in decoded:
+            user_payload["class_id"] = decoded["class_id"]
+            
+        new_access = sign_access_token(user_payload)
+        new_refresh = sign_refresh_token(user_payload)
+        return {
+            "success": True,
+            "accessToken": new_access,
+            "refreshToken": new_refresh,
+            "role": decoded.get("role"),
+            "user": user_payload
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 # Legacy Auth redirects
 @app.post("/api/auth/student/login")
@@ -252,53 +351,35 @@ async def legacy_admin_login(payload: AdminLoginPayload):
 async def student_dashboard(user: dict = Depends(require_role(["student"]))):
     student_id = user["id"]
     
-    # 1. Fetch Student Details
-    st_res = from_table("college_students").select("*").eq("id", student_id).single().execute()
+    # 1. Fetch Student Details via optimized view
+    st_res = from_table("college_student_details_view").select("*").eq("id", student_id).single().execute()
     if st_res["error"] or not st_res["data"]:
         raise HTTPException(status_code=404, detail="Student not found")
     student = st_res["data"]
     
-    # Fetch Dept & Class
-    dept_res = from_table("college_departments").select("name, code").eq("id", student["department_id"]).single().execute()
-    dept = dept_res["data"] if dept_res["data"] else {"name": "AIML", "code": "AIML"}
-    
-    cls_res = from_table("college_classes").select("name").eq("id", student["class_id"]).single().execute()
-    cls_data = cls_res["data"] if cls_res["data"] else {"name": "AIML-A"}
-    
-    # 2. Fetch Attendance
-    att_res = from_table("college_attendance").select("status, attendance_date, marked_by").eq("student_id", student_id).execute()
+    # 2. Fetch Attendance via enriched view
+    att_res = from_table("college_attendance_enriched").select("status, attendance_date, teacher_name").eq("student_id", student_id).execute()
     attendance_records = att_res["data"] or []
     total_att = len(attendance_records)
     present_att = sum(1 for a in attendance_records if a["status"] == "present")
     att_pct = round((present_att / total_att) * 100) if total_att > 0 else 0
     
-    # Map teacher names for attendance details
-    teacher_ids = list(set([a["marked_by"] for a in attendance_records if a["marked_by"]]))
-    teacher_map = {}
-    if teacher_ids:
-        tc_res = from_table("college_teachers").select("id, name").in_("id", teacher_ids).execute()
-        teacher_map = {t["id"]: t["name"] for t in (tc_res["data"] or [])}
-        
     history = []
     for a in attendance_records:
         history.append({
             "date": a["attendance_date"],
             "status": a["status"],
-            "teacher": teacher_map.get(a["marked_by"], "Unknown")
+            "teacher": a["teacher_name"] or "Unknown"
         })
     
-    # 3. Fetch Mid Sem Marks
-    marks_res = from_table("college_marks").select("marks_obtained, max_marks, subject_id").eq("student_id", student_id).eq("exam_type", "mid_sem").execute()
+    # 3. Fetch Mid Sem Marks via enriched view
+    marks_res = from_table("college_marks_enriched").select("marks_obtained, max_marks, subject_name").eq("student_id", student_id).eq("exam_type", "mid_sem").execute()
     marks_records = marks_res["data"] or []
-    
-    sub_res = from_table("college_subjects").select("id, name").execute()
-    subjects = sub_res["data"] or []
-    sub_map = {s["id"]: s["name"] for s in subjects}
     
     marks_list = []
     for m in marks_records:
         marks_list.append({
-            "subject": sub_map.get(m["subject_id"], "Subject"),
+            "subject": m["subject_name"] or "Subject",
             "obtained": float(m["marks_obtained"]),
             "max": float(m["max_marks"])
         })
@@ -326,8 +407,8 @@ async def student_dashboard(user: dict = Depends(require_role(["student"]))):
         "student": {
             "name": student["name"],
             "enrollment": student["enrollment_number"],
-            "department": dept["name"],
-            "class": cls_data["name"]
+            "department": student["department_name"],
+            "class": student["class_name"]
         },
         "attendance": {
             "total": total_att,
@@ -346,6 +427,49 @@ async def student_dashboard(user: dict = Depends(require_role(["student"]))):
             "pending": pending,
             "status": status_str
         }
+    }
+
+@app.get("/api/student/dashboard-summary")
+async def student_dashboard_summary(user: dict = Depends(require_role(["student"]))):
+    student_id = user["id"]
+    
+    # 1. Fetch main dashboard data
+    dashboard_data = await student_dashboard(user)
+    
+    # 2. Fetch hostel details via enriched view
+    alloc_res = from_table("hostel_allocations_enriched").select("*").eq("student_id", student_id).neq("status", "Removed").maybe_single().execute()
+    alloc = alloc_res["data"]
+    
+    hostel_data = {"allocated": False}
+    if alloc:
+        roommates = []
+        if alloc["room_id"]:
+            mates_res = from_table("hostel_allocations_enriched").select("student_name").eq("room_id", alloc["room_id"]).neq("student_id", student_id).neq("status", "Removed").execute()
+            roommates = [m["student_name"] for m in (mates_res["data"] or [])]
+            
+        fee_res = from_table("college_hostel_fees").select("*").eq("student_id", student_id).maybe_single().execute()
+        fee = fee_res["data"] or {"total_fee": 30000, "paid_amount": 0, "pending_amount": 30000, "status": "pending"}
+        
+        hostel_data = {
+            "allocated": True,
+            "status": alloc["status"],
+            "hostel_name": alloc["hostel_name"] or "Unknown",
+            "room_number": alloc["room_number"] or "Pending",
+            "floor": alloc["floor"] or 0,
+            "bed_number": alloc["bed_number"],
+            "allocation_date": alloc["allocation_date"],
+            "roommates": roommates,
+            "fees": {
+                "total": float(fee["total_fee"]),
+                "paid": float(fee["paid_amount"]),
+                "pending": float(fee["pending_amount"]),
+                "status": fee["status"]
+            }
+        }
+        
+    return {
+        **dashboard_data,
+        "hostel": hostel_data
     }
 
 @app.post("/api/student/fees/pay")
@@ -386,23 +510,18 @@ async def student_pay_fees(payload: PayFeesPayload, user: dict = Depends(require
     if update_res["error"]:
         raise HTTPException(status_code=500, detail=update_res["error"]["message"])
         
+    analytics_cache.clear() # Invalidate analytics cache
     return {"success": True, "fees": update_res["data"][0]}
 
 @app.get("/api/student/attendance")
 async def student_get_attendance(user: dict = Depends(require_role(["student"]))):
     student_id = user["id"]
     
-    att_res = from_table("college_attendance").select("status, attendance_date, marked_by").eq("student_id", student_id).execute()
+    att_res = from_table("college_attendance_enriched").select("status, attendance_date, teacher_name").eq("student_id", student_id).execute()
     if att_res["error"]:
         raise HTTPException(status_code=500, detail=att_res["error"]["message"])
     records_raw = att_res["data"] or []
     
-    teacher_ids = list(set([r["marked_by"] for r in records_raw if r["marked_by"]]))
-    teacher_map = {}
-    if teacher_ids:
-        tc_res = from_table("college_teachers").select("id, name").in_("id", teacher_ids).execute()
-        teacher_map = {t["id"]: t["name"] for t in (tc_res["data"] or [])}
-        
     records = []
     present_days = 0
     absent_days = 0
@@ -417,7 +536,7 @@ async def student_get_attendance(user: dict = Depends(require_role(["student"]))
         records.append({
             "date": r["attendance_date"],
             "status": status,
-            "teacher": teacher_map.get(r["marked_by"], "Unknown")
+            "teacher": r["teacher_name"] or "Unknown"
         })
         
     total = len(records)
@@ -540,6 +659,7 @@ async def payment_verify(payload: VerifyPaymentPayload, user: dict = Depends(req
     if update_res["error"]:
         raise HTTPException(status_code=500, detail=update_res["error"]["message"])
         
+    analytics_cache.clear() # Invalidate analytics cache
     return {"success": True, "fees": update_res["data"][0]}
 
 @app.get("/api/student/receipt/{fee_id}")
@@ -701,6 +821,7 @@ async def root_save_attendance(payload: SaveAttendanceData, user: dict = Depends
     if res.get("error"):
          raise HTTPException(status_code=500, detail=res["error"]["message"])
             
+    analytics_cache.clear() # Invalidate analytics cache
     return {"success": True, "message": "Attendance saved successfully"}
 
 @app.get("/api/teacher/classes/{class_id}/subjects")
@@ -941,99 +1062,102 @@ async def admin_delete_user(type_str: str, user_id: int, user: dict = Depends(re
 
 @app.get("/api/admin/analytics")
 async def admin_analytics(user: dict = Depends(require_role(["admin"]))):
-    students_res = from_table("college_students").select("id, name, enrollment_number, class_id, department_id").execute()
-    students = students_res["data"] or []
-    
-    classes_res = from_table("college_classes").select("id, name").execute()
-    classes = classes_res["data"] or []
-    class_map = {c["id"]: c["name"] for c in classes}
-    
-    depts_res = from_table("college_departments").select("id, name, code").execute()
-    depts = depts_res["data"] or []
-    dept_map = {d["id"]: d["name"] for d in depts}
-    
-    subjects_res = from_table("college_subjects").select("id, name").execute()
-    subjects = subjects_res["data"] or []
-    sub_map = {s["id"]: s["name"] for s in subjects}
-    
-    student_map = {s["id"]: s for s in students}
-    
-    attendance_res = from_table("college_attendance").select("student_id, class_id, status").execute()
-    attendance = attendance_res["data"] or []
-    
-    marks_res = from_table("college_marks").select("student_id, class_id, subject_id, marks_obtained, max_marks").execute()
-    marks = marks_res["data"] or []
+    cache_key = "admin_analytics"
+    cached_res = analytics_cache.get(cache_key)
+    if cached_res:
+        return cached_res
+
+    # Query the aggregated view for all students
+    st_res = from_table("college_student_analytics").select("*").execute()
+    student_stats_raw = st_res["data"] or []
     
     student_stats = []
-    for s in students:
-        att = [a for a in attendance if a["student_id"] == s["id"]]
-        total = len(att)
-        present = sum(1 for a in att if a["status"] == "present")
-        pct = round((present / total) * 100) if total > 0 else 0
-        
-        s_marks = [m for m in marks if m["student_id"] == s["id"]]
-        avg = sum((float(m["marks_obtained"]) / float(m["max_marks"])) * 100 for m in s_marks) / len(s_marks) if s_marks else 0.0
-        
+    all_pcts = []
+    
+    for s in student_stats_raw:
+        avg_m = float(s["avg_marks"])
         student_stats.append({
             "id": s["id"],
             "name": s["name"],
-            "enrollment": s["enrollment_number"],
-            "department": dept_map.get(s["department_id"], "AIML"),
-            "class": class_map.get(s["class_id"], "AIML-A"),
-            "attendancePct": pct,
-            "avgMarks": round(avg, 1)
+            "enrollment": s["enrollment"],
+            "department": s["department"] or "AIML",
+            "class": s["class"] or "AIML-A",
+            "attendancePct": s["attendance_pct"],
+            "avgMarks": avg_m
         })
-        
-    dept_agg = {}
+        if avg_m > 0:
+            all_pcts.append(avg_m)
+            
+    # Calculate dept average marks from student_stats in memory
+    dept_marks = {}
     for s in student_stats:
         dept = s["department"]
-        if dept not in dept_agg:
-            dept_agg[dept] = {"total": 0, "count": 0, "marks": 0.0, "mCount": 0}
-        dept_agg[dept]["total"] += s["attendancePct"]
-        dept_agg[dept]["count"] += 1
         if s["avgMarks"] > 0:
-            dept_agg[dept]["marks"] += s["avgMarks"]
-            dept_agg[dept]["mCount"] += 1
+            if dept not in dept_marks:
+                dept_marks[dept] = []
+            dept_marks[dept].append(s["avgMarks"])
             
+    # Fetch department-wise attendance summary
+    dept_res = from_table("college_dept_attendance_summary").select("*").execute()
+    dept_raw = dept_res["data"] or []
+    
     department_wise = []
-    for dept, v in dept_agg.items():
+    for d in dept_raw:
+        dept_name = d["department"]
+        d_marks = dept_marks.get(dept_name, [])
+        avg_d_marks = round(sum(d_marks) / len(d_marks), 1) if d_marks else 0.0
+        
+        present = d["present"]
+        total = d["total"]
+        pct = round((present / total) * 100) if total > 0 else 0
+        
         department_wise.append({
-            "department": dept,
-            "avgAttendance": round(v["total"] / v["count"]) if v["count"] > 0 else 0,
-            "avgMarks": round(v["marks"] / v["mCount"], 1) if v["mCount"] > 0 else 0.0
+            "department": dept_name,
+            "avgAttendance": pct,
+            "avgMarks": avg_d_marks
         })
         
-    class_agg = {}
-    for s in student_stats:
-        cls_name = s["class"]
-        if cls_name not in class_agg:
-            class_agg[cls_name] = {"total": 0, "count": 0}
-        class_agg[cls_name]["total"] += s["attendancePct"]
-        class_agg[cls_name]["count"] += 1
-        
+    # Fetch class-wise attendance summary
+    class_res = from_table("college_class_attendance_summary").select("*").execute()
+    class_raw = class_res["data"] or []
     class_wise = []
-    for cls_name, v in class_agg.items():
+    for c in class_raw:
+        present = c["present"]
+        total = c["total"]
+        pct = round((present / total) * 100) if total > 0 else 0
         class_wise.append({
-            "class": cls_name,
-            "avgAttendance": round(v["total"] / v["count"]) if v["count"] > 0 else 0
+            "class": c["class"],
+            "avgAttendance": pct
         })
         
-    all_pcts = [s["avgMarks"] for s in student_stats if s["avgMarks"] > 0]
+    # Top Performers
     top_performers = sorted(student_stats, key=lambda x: x["avgMarks"], reverse=True)[:5]
     
-    att_present = sum(1 for a in attendance if a["status"] == "present")
-    att_absent = sum(1 for a in attendance if a["status"] == "absent")
+    # Get total present/absent from monthly summary (saves querying attendance table)
+    month_res = from_table("college_monthly_attendance_summary").select("*").execute()
+    monthly_data = month_res["data"] or []
+    att_present = sum(m["present"] for m in monthly_data)
+    att_absent = sum(m["total"] - m["present"] for m in monthly_data)
     
+    # Marks Trend: Top 20 marks records via view
+    marks_trend_res = from_table("college_marks_enriched").select("marks_obtained, max_marks, student_id, subject_name").limit(20).execute()
+    marks_raw = marks_trend_res["data"] or []
+    
+    st_ids = list(set([m["student_id"] for m in marks_raw]))
+    student_map = {}
+    if st_ids:
+        st_names_res = from_table("college_students").select("id, name").in_("id", st_ids).execute()
+        student_map = {s["id"]: s["name"] for s in (st_names_res["data"] or [])}
+        
     marks_trend = []
-    for m in marks[:20]:
-        st = student_map.get(m["student_id"])
+    for m in marks_raw:
         marks_trend.append({
-            "student": st["name"] if st else "Student",
-            "subject": sub_map.get(m["subject_id"], "Subject"),
+            "student": student_map.get(m["student_id"], "Student"),
+            "subject": m["subject_name"] or "Subject",
             "percentage": round((float(m["marks_obtained"]) / float(m["max_marks"])) * 100)
         })
         
-    return {
+    result = {
         "studentStats": student_stats,
         "departmentWise": department_wise,
         "classWise": class_wise,
@@ -1046,180 +1170,134 @@ async def admin_analytics(user: dict = Depends(require_role(["admin"]))):
         "attendanceChart": {"present": att_present, "absent": att_absent},
         "marksTrend": marks_trend
     }
+    
+    analytics_cache.set(cache_key, result)
+    return result
 
 
 # --- NEW Fee Analytics Endpoint ---
 
 @app.get("/api/admin/fee-analytics")
 async def admin_fee_analytics(user: dict = Depends(require_role(["admin"]))):
-    fees_res = from_table("college_fees").select("*").execute()
-    fees_records = fees_res["data"] or []
+    cache_key = "admin_fee_analytics"
+    cached_res = analytics_cache.get(cache_key)
+    if cached_res:
+        return cached_res
+
+    # 1. Summary metrics
+    metrics_res = from_table("college_fee_summary_metrics").select("*").single().execute()
+    metrics = metrics_res["data"] or {
+        "total_collected": 0.0,
+        "pending_fees": 0.0,
+        "paid_students": 0,
+        "unpaid_students": 0
+    }
     
-    students_res = from_table("college_students").select("id, name, department_id").execute()
-    students = students_res["data"] or []
-    student_map = {s["id"]: s for s in students}
+    # 2. Department Wise Fees
+    dept_res = from_table("college_dept_fee_summary").select("*").execute()
+    department_wise = dept_res["data"] or []
     
-    depts_res = from_table("college_departments").select("id, name, code").execute()
-    depts = depts_res["data"] or []
-    dept_map = {d["id"]: d for d in depts}
+    # 3. Collection Trend
+    trend_res = from_table("college_fee_collection_trend").select("*").execute()
+    collection_trend = trend_res["data"] or []
     
-    total_collected = 0.0
-    pending_fees = 0.0
-    paid_students_count = 0
-    unpaid_students_count = 0
-    
-    dept_wise = {}
-    for d in depts:
-        dept_wise[d["name"]] = {"collected": 0.0, "pending": 0.0}
-        
-    for f in fees_records:
-        paid_val = float(f["paid_amount"])
-        pending_val = float(f["pending_amount"])
-        
-        total_collected += paid_val
-        pending_fees += pending_val
-        
-        if f["status"] == "paid":
-            paid_students_count += 1
-        else:
-            unpaid_students_count += 1
-            
-        # Group by department
-        st = student_map.get(f["student_id"])
-        if st:
-            dept_obj = dept_map.get(st["department_id"])
-            if dept_obj:
-                dept_name = dept_obj["name"]
-                if dept_name not in dept_wise:
-                    dept_wise[dept_name] = {"collected": 0.0, "pending": 0.0}
-                dept_wise[dept_name]["collected"] += paid_val
-                dept_wise[dept_name]["pending"] += pending_val
-                
-    department_wise_fees = [
-        {
-            "department": dept,
-            "collected": v["collected"],
-            "pending": v["pending"]
-        } for dept, v in dept_wise.items()
-    ]
-    
-    # Collection trend: Group by date from created_at/updated_at
-    # For demo purposes, we will return some structured trend data based on transaction dates,
-    # or fall back to mock dates if no payments exist.
-    trend_map = {}
-    for f in fees_records:
-        date_str = f.get("updated_at") or f.get("created_at")
-        if date_str:
-            # Parse just the date part (YYYY-MM-DD)
-            day = date_str[:10]
-            trend_map[day] = trend_map.get(day, 0.0) + float(f["paid_amount"])
-            
-    # Sort the trend by date
+    # Sort trend by date
     collection_trend = sorted(
-        [{"date": day, "amount": amt} for day, amt in trend_map.items()],
+        [{"date": t["date"], "amount": float(t["amount"])} for t in collection_trend],
         key=lambda x: x["date"]
     )
     
-    # Ensure we have at least some trend data for charts if empty
     if not collection_trend:
         today = datetime.date.today().isoformat()
-        collection_trend = [{"date": today, "amount": total_collected}]
+        collection_trend = [{"date": today, "amount": float(metrics["total_collected"])}]
         
-    return {
-        "totalCollected": total_collected,
-        "pendingFees": pending_fees,
-        "paidStudents": paid_students_count,
-        "unpaidStudents": unpaid_students_count,
+    result = {
+        "totalCollected": float(metrics["total_collected"]),
+        "pendingFees": float(metrics["pending_fees"]),
+        "paidStudents": int(metrics["paid_students"]),
+        "unpaidStudents": int(metrics["unpaid_students"]),
         "collectionTrend": collection_trend,
-        "departmentWise": department_wise_fees
+        "departmentWise": [
+            {
+                "department": d["department"],
+                "collected": float(d["collected"]),
+                "pending": float(d["pending"])
+            } for d in department_wise
+        ]
     }
+    
+    analytics_cache.set(cache_key, result)
+    return result
 
 @app.get("/api/admin/analytics/attendance")
 async def admin_attendance_analytics(user: dict = Depends(require_role(["admin"]))):
-    att_res = from_table("college_attendance").select("student_id, class_id, attendance_date, status").execute()
-    records = att_res["data"] or []
-    
-    classes_res = from_table("college_classes").select("id, name, department_id").execute()
-    classes = {c["id"]: c for c in (classes_res["data"] or [])}
-    
-    depts_res = from_table("college_departments").select("id, name").execute()
-    depts = {d["id"]: d["name"] for d in (depts_res["data"] or [])}
-    
-    students_res = from_table("college_students").select("id, name, department_id, class_id").execute()
-    students = {s["id"]: s for s in (students_res["data"] or [])}
-    
+    cache_key = "admin_attendance_analytics"
+    cached_res = analytics_cache.get(cache_key)
+    if cached_res:
+        return cached_res
+
+    # 1. Department Wise
+    dept_res = from_table("college_dept_attendance_summary").select("*").execute()
+    dept_raw = dept_res["data"] or []
     dept_wise = {}
+    for d in dept_raw:
+        dept_wise[d["department"]] = {
+            "present": d["present"],
+            "total": d["total"]
+        }
+        
+    # 2. Class Wise
+    class_res = from_table("college_class_attendance_summary").select("*").execute()
+    class_raw = class_res["data"] or []
     class_wise = {}
+    for c in class_raw:
+        class_wise[c["class"]] = {
+            "present": c["present"],
+            "total": c["total"]
+        }
+        
+    # 3. Monthly Trends
+    month_res = from_table("college_monthly_attendance_summary").select("*").execute()
+    month_raw = month_res["data"] or []
     monthly_trends = {}
-    student_wise = {}
+    for m in month_raw:
+        monthly_trends[m["month"]] = {
+            "present": m["present"],
+            "total": m["total"]
+        }
+        
+    # 4. Student Wise Attendance Summary
+    stud_res = from_table("college_student_attendance_summary").select("*").execute()
+    student_wise = stud_res["data"] or []
     
-    for r in records:
-        st = students.get(r["student_id"])
-        if not st: continue
-        
-        dept_id = st["department_id"]
-        cls_id = st["class_id"]
-        status = r["status"]
-        date_str = r["attendance_date"]
-        month_str = date_str[:7] if len(date_str) >= 7 else "Unknown"
-        
-        dept_name = depts.get(dept_id, "Unknown")
-        cls_name = classes.get(cls_id, {}).get("name", "Unknown")
-        
-        if dept_name not in dept_wise:
-            dept_wise[dept_name] = {"present": 0, "total": 0}
-        dept_wise[dept_name]["total"] += 1
-        if status == "present":
-            dept_wise[dept_name]["present"] += 1
-            
-        if cls_name not in class_wise:
-            class_wise[cls_name] = {"present": 0, "total": 0}
-        class_wise[cls_name]["total"] += 1
-        if status == "present":
-            class_wise[cls_name]["present"] += 1
-            
-        if month_str not in monthly_trends:
-            monthly_trends[month_str] = {"present": 0, "total": 0}
-        monthly_trends[month_str]["total"] += 1
-        if status == "present":
-            monthly_trends[month_str]["present"] += 1
-
-        student_id = r["student_id"]
-        if student_id not in student_wise:
-            student_wise[student_id] = {
-                "name": st["name"],
-                "class": cls_name,
-                "present": 0,
-                "total": 0
-            }
-        student_wise[student_id]["total"] += 1
-        if status == "present":
-            student_wise[student_id]["present"] += 1
-
-    return {
+    result = {
         "departmentWise": dept_wise,
         "classWise": class_wise,
         "monthlyTrends": monthly_trends,
-        "studentWise": list(student_wise.values())
+        "studentWise": student_wise
     }
+    
+    analytics_cache.set(cache_key, result)
+    return result
 
 
 # --- HOSTEL MODULE ENDPOINTS ---
 
 @app.get("/api/hostels")
-async def get_hostels(user: dict = Depends(require_role(["admin", "student"]))):
+async def get_hostels(user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden", "student"]))):
     res = from_table("hostels").select("*").order("hostel_name").execute()
     return {"hostels": res["data"] or []}
 
 @app.post("/api/hostels")
-async def create_hostel(payload: CreateHostelPayload, user: dict = Depends(require_role(["admin"]))):
+async def create_hostel(payload: CreateHostelPayload, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
     res = from_table("hostels").insert(payload.dict()).execute()
     if res["error"]:
         raise HTTPException(status_code=400, detail=res["error"]["message"])
+    analytics_cache.clear()
     return {"success": True, "hostel": res["data"][0]}
 
 @app.get("/api/rooms")
-async def get_rooms(hostel_id: Optional[int] = None, user: dict = Depends(require_role(["admin", "student"]))):
+async def get_rooms(hostel_id: Optional[int] = None, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden", "student"]))):
     query = from_table("rooms").select("*").order("room_number")
     if hostel_id:
         query = query.eq("hostel_id", hostel_id)
@@ -1227,7 +1305,7 @@ async def get_rooms(hostel_id: Optional[int] = None, user: dict = Depends(requir
     return {"rooms": res["data"] or []}
 
 @app.post("/api/rooms")
-async def create_room(payload: CreateRoomPayload, user: dict = Depends(require_role(["admin"]))):
+async def create_room(payload: CreateRoomPayload, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
     res = from_table("rooms").insert(payload.dict()).execute()
     if res["error"]:
         raise HTTPException(status_code=400, detail=res["error"]["message"])
@@ -1237,37 +1315,25 @@ async def create_room(payload: CreateRoomPayload, user: dict = Depends(require_r
         "total_rooms": from_table("rooms").select("id", count="exact").eq("hostel_id", payload.hostel_id).execute()["count"]
     }).eq("id", payload.hostel_id).execute()
 
+    analytics_cache.clear()
     return {"success": True, "room": res["data"][0]}
 
 @app.get("/api/hostel/allocations")
-async def get_allocations(user: dict = Depends(require_role(["admin"]))):
-    res = from_table("hostel_allocations").select("*").order("created_at", ascending=False).execute()
-    allocations = res["data"] or []
-
-    # Enrich with student, hostel, and room info
-    if not allocations:
-        return {"allocations": []}
-
-    student_ids = [a["student_id"] for a in allocations]
-    hostel_ids = [a["hostel_id"] for a in allocations]
-    room_ids = [a["room_id"] for a in allocations]
-
-    students = {s["id"]: s for s in from_table("college_students").select("id, name, enrollment_number, department_id").in_("id", student_ids).execute()["data"] or []}
-    hostels = {h["id"]: h for h in from_table("hostels").select("id, hostel_name").in_("id", hostel_ids).execute()["data"] or []}
-    rooms = {r["id"]: r for r in from_table("rooms").select("id, room_number, floor").in_("id", room_ids).execute()["data"] or []}
-    depts = {d["id"]: d["name"] for d in from_table("college_departments").select("id, name").execute()["data"] or []}
-
+async def get_allocations(user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
+    res = from_table("hostel_allocations_enriched").select("*").order("created_at", ascending=False).execute()
+    if res["error"]:
+        raise HTTPException(status_code=500, detail=res["error"]["message"])
+    
     enriched = []
-    for a in allocations:
-        st = students.get(a["student_id"], {})
+    for a in (res["data"] or []):
         enriched.append({
             "id": a["id"],
-            "student_name": st.get("name", "Unknown"),
-            "enrollment_no": st.get("enrollment_number", "Unknown"),
-            "department": depts.get(st.get("department_id"), "Unknown"),
-            "hostel_name": hostels.get(a["hostel_id"], {}).get("hostel_name", "Unknown"),
-            "room_number": rooms.get(a["room_id"], {}).get("room_number", "Unknown"),
-            "floor": rooms.get(a["room_id"], {}).get("floor", 0),
+            "student_name": a["student_name"] or "Unknown",
+            "enrollment_no": a["enrollment_no"] or "Unknown",
+            "department": a["department"] or "Unknown",
+            "hostel_name": a["hostel_name"] or "Unknown",
+            "room_number": a["room_number"] or "Unknown",
+            "floor": a["floor"] or 0,
             "bed_number": a["bed_number"],
             "status": a["status"],
             "allocation_date": a["allocation_date"]
@@ -1275,7 +1341,7 @@ async def get_allocations(user: dict = Depends(require_role(["admin"]))):
     return {"allocations": enriched}
 
 @app.post("/api/hostel/allocate")
-async def allocate_room(payload: AllocateRoomPayload, user: dict = Depends(require_role(["admin"]))):
+async def allocate_room(payload: AllocateRoomPayload, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
     # Check if student already has an active allocation
     existing = from_table("hostel_allocations").select("id").eq("student_id", payload.student_id).neq("status", "Removed").maybe_single().execute()
     if existing["data"]:
@@ -1315,6 +1381,7 @@ async def allocate_room(payload: AllocateRoomPayload, user: dict = Depends(requi
                 "status": "pending"
             }).execute()
 
+            analytics_cache.clear()
             return {"success": True, "status": "Waiting", "message": "Added to waiting list"}
 
         target_room_id = room["id"]
@@ -1354,10 +1421,11 @@ async def allocate_room(payload: AllocateRoomPayload, user: dict = Depends(requi
         "status": "pending"
     }).execute()
 
+    analytics_cache.clear()
     return {"success": True, "allocation": res["data"][0]}
 
 @app.put("/api/hostel/change-room")
-async def change_room(payload: ChangeRoomPayload, user: dict = Depends(require_role(["admin"]))):
+async def change_room(payload: ChangeRoomPayload, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
     alloc_res = from_table("hostel_allocations").select("*").eq("id", payload.allocation_id).single().execute()
     alloc = alloc_res["data"]
     if not alloc:
@@ -1392,10 +1460,11 @@ async def change_room(payload: ChangeRoomPayload, user: dict = Depends(require_r
         "status": "Allocated"
     }).eq("id", payload.allocation_id).execute()
 
+    analytics_cache.clear()
     return {"success": True, "allocation": res["data"][0]}
 
 @app.delete("/api/hostel/remove-allocation/{allocation_id}")
-async def remove_allocation(allocation_id: int, user: dict = Depends(require_role(["admin"]))):
+async def remove_allocation(allocation_id: int, user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
     alloc_res = from_table("hostel_allocations").select("*").eq("id", allocation_id).single().execute()
     alloc = alloc_res["data"]
     if not alloc:
@@ -1411,60 +1480,65 @@ async def remove_allocation(allocation_id: int, user: dict = Depends(require_rol
     # Remove allocation (soft delete)
     from_table("hostel_allocations").update({"status": "Removed"}).eq("id", allocation_id).execute()
 
+    analytics_cache.clear()
     return {"success": True}
 
 @app.get("/api/hostel/analytics")
-async def get_hostel_analytics(user: dict = Depends(require_role(["admin"]))):
-    hostels = from_table("hostels").select("*").execute()["data"] or []
-    rooms = from_table("rooms").select("*").execute()["data"] or []
-    allocations = from_table("hostel_allocations").select("*").neq("status", "Removed").execute()["data"] or []
+async def get_hostel_analytics(user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))):
+    cache_key = "hostel_analytics"
+    cached_res = analytics_cache.get(cache_key)
+    if cached_res:
+        return cached_res
 
-    total_hostels = len(hostels)
-    total_rooms = len(rooms)
-    total_capacity = sum(r["capacity"] for r in rooms)
-    occupied_beds = sum(r["occupied_beds"] for r in rooms)
-    waiting_list = sum(1 for a in allocations if a["status"] == "Waiting")
-
+    # 1. Summary metrics
+    metrics_res = from_table("hostel_summary_metrics").select("*").single().execute()
+    metrics = metrics_res["data"] or {
+        "total_hostels": 0,
+        "total_rooms": 0,
+        "total_capacity": 0,
+        "occupied_beds": 0,
+        "waiting_list": 0
+    }
+    
+    # 2. Hostel stats
+    stats_res = from_table("hostel_occupancy_stats").select("*").execute()
+    stats_raw = stats_res["data"] or []
+    
     hostel_stats = []
-    for h in hostels:
-        h_rooms = [r for r in rooms if r["hostel_id"] == h["id"]]
-        h_cap = sum(r["capacity"] for r in h_rooms)
-        h_occ = sum(r["occupied_beds"] for r in h_rooms)
+    for h in stats_raw:
+        h_cap = h["capacity"]
+        h_occ = h["occupied"]
         hostel_stats.append({
-            "name": h["hostel_name"],
+            "name": h["name"],
             "occupancy": round((h_occ / h_cap) * 100) if h_cap > 0 else 0,
             "available": h_cap - h_occ
         })
 
-    return {
-        "totalHostels": total_hostels,
-        "totalRooms": total_rooms,
-        "occupiedRooms": occupied_beds,
-        "availableRooms": total_capacity - occupied_beds,
-        "waitingList": waiting_list,
+    result = {
+        "totalHostels": int(metrics["total_hostels"]),
+        "totalRooms": int(metrics["total_rooms"]),
+        "occupiedRooms": int(metrics["occupied_beds"]),
+        "availableRooms": int(metrics["total_capacity"] - metrics["occupied_beds"]),
+        "waitingList": int(metrics["waiting_list"]),
         "hostelStats": hostel_stats
     }
+    analytics_cache.set(cache_key, result)
+    return result
 
 @app.get("/api/student/hostel")
 async def get_student_hostel(user: dict = Depends(require_role(["student"]))):
     student_id = user["id"]
-    alloc_res = from_table("hostel_allocations").select("*").eq("student_id", student_id).neq("status", "Removed").maybe_single().execute()
+    alloc_res = from_table("hostel_allocations_enriched").select("*").eq("student_id", student_id).neq("status", "Removed").maybe_single().execute()
     alloc = alloc_res["data"]
 
     if not alloc:
         return {"allocated": False}
 
-    hostel = from_table("hostels").select("hostel_name").eq("id", alloc["hostel_id"]).single().execute()["data"]
-    room = from_table("rooms").select("room_number, floor").eq("id", alloc["room_id"]).single().execute()["data"] if alloc["room_id"] else None
-
-    # Roommates list
+    # Roommates list via enriched view
     roommates = []
     if alloc["room_id"]:
-        mates_res = from_table("hostel_allocations").select("student_id").eq("room_id", alloc["room_id"]).neq("student_id", student_id).neq("status", "Removed").execute()
-        mate_ids = [m["student_id"] for m in (mates_res["data"] or [])]
-        if mate_ids:
-            mates_info = from_table("college_students").select("name").in_("id", mate_ids).execute()["data"] or []
-            roommates = [m["name"] for m in mates_info]
+        mates_res = from_table("hostel_allocations_enriched").select("student_name").eq("room_id", alloc["room_id"]).neq("student_id", student_id).neq("status", "Removed").execute()
+        roommates = [m["student_name"] for m in (mates_res["data"] or [])]
 
     # Fee status
     fee_res = from_table("college_hostel_fees").select("*").eq("student_id", student_id).maybe_single().execute()
@@ -1473,9 +1547,9 @@ async def get_student_hostel(user: dict = Depends(require_role(["student"]))):
     return {
         "allocated": True,
         "status": alloc["status"],
-        "hostel_name": hostel["hostel_name"] if hostel else "Unknown",
-        "room_number": room["room_number"] if room else "Pending",
-        "floor": room["floor"] if room else 0,
+        "hostel_name": alloc["hostel_name"] or "Unknown",
+        "room_number": alloc["room_number"] or "Pending",
+        "floor": alloc["floor"] or 0,
         "bed_number": alloc["bed_number"],
         "allocation_date": alloc["allocation_date"],
         "roommates": roommates,
@@ -1506,6 +1580,7 @@ async def pay_hostel_fee(payload: PayHostelFeePayload, user: dict = Depends(requ
         "updated_at": datetime.datetime.utcnow().isoformat()
     }).eq("student_id", student_id).execute()
 
+    analytics_cache.clear()
     return {"success": True}
 
 
@@ -1518,19 +1593,25 @@ async def hostel_login(payload: AdminLoginPayload):
     user_data = query_user("college_admins", "username", username, "admin", None)
     if not user_data or not verify_password(payload.password, user_data["password_hash"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
+    # hostel_admin role is in ADMIN_ROLES, so all require_role(['admin']) endpoints
+    # will accept this token automatically.
     token_payload = {
-        "role": "admin",
+        "role": "hostel_admin",
         "id": user_data["id"],
         "loginId": user_data["username"],
         "name": user_data["name"]
     }
-    
-    token = sign_token(token_payload)
+
+    print(f"[AUTH] Hostel login OK — username='{username}' assigned role='hostel_admin'")
+    access_token = sign_access_token(token_payload)
+    refresh_token = sign_refresh_token(token_payload)
     return {
         "success": True,
-        "token": token,
-        "role": "admin",
+        "token": access_token,
+        "accessToken": access_token,
+        "refreshToken": refresh_token,
+        "role": "hostel_admin",
         "user": token_payload
     }
 
@@ -1540,21 +1621,19 @@ async def get_hostel_students(
     search: Optional[str] = None,
     department: Optional[str] = None,
     class_name: Optional[str] = None,
-    user: dict = Depends(require_role(["admin"]))
+    user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))
 ):
-    res = from_table("hostel_students").select("*").order("created_at", ascending=False).execute()
+    query = from_table("hostel_students").select("*").order("created_at", False)
+    if department:
+        query = query.eq("department", department)
+    if class_name:
+        query = query.eq("class_name", class_name)
+    res = query.execute()
     if res["error"]:
         raise HTTPException(status_code=500, detail=res["error"]["message"])
     
     students = res["data"] or []
     
-    # Filter in Python
-    if department:
-        students = [s for s in students if s.get("department") == department]
-        
-    if class_name:
-        students = [s for s in students if s.get("class_name") == class_name]
-        
     if search:
         q = search.lower().strip()
         students = [
@@ -1573,7 +1652,7 @@ async def get_hostel_students(
 @app.post("/api/hostel/students")
 async def create_hostel_student(
     payload: HostelStudentPayload,
-    user: dict = Depends(require_role(["admin"]))
+    user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))
 ):
     existing = from_table("hostel_students").select("id").eq("enrollment_no", payload.enrollment_no).maybe_single().execute()
     if existing["data"]:
@@ -1583,6 +1662,7 @@ async def create_hostel_student(
     if res["error"]:
         raise HTTPException(status_code=400, detail=res["error"]["message"])
         
+    analytics_cache.clear()
     return res["data"][0]
 
 @app.put("/hostel/students/{id}")
@@ -1590,7 +1670,7 @@ async def create_hostel_student(
 async def update_hostel_student(
     id: int,
     payload: HostelStudentPayload,
-    user: dict = Depends(require_role(["admin"]))
+    user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))
 ):
     existing = from_table("hostel_students").select("id").eq("id", id).maybe_single().execute()
     if not existing["data"]:
@@ -1600,13 +1680,14 @@ async def update_hostel_student(
     if res["error"]:
         raise HTTPException(status_code=400, detail=res["error"]["message"])
         
+    analytics_cache.clear()
     return res["data"][0]
 
 @app.delete("/hostel/students/{id}")
 @app.delete("/api/hostel/students/{id}")
 async def delete_hostel_student(
     id: int,
-    user: dict = Depends(require_role(["admin"]))
+    user: dict = Depends(require_role(["super_admin", "college_admin", "hostel_admin", "warden"]))
 ):
     existing = from_table("hostel_students").select("id").eq("id", id).maybe_single().execute()
     if not existing["data"]:
@@ -1616,6 +1697,7 @@ async def delete_hostel_student(
     if res["error"]:
         raise HTTPException(status_code=400, detail=res["error"]["message"])
         
+    analytics_cache.clear()
     return {"success": True, "message": "Allocation removed successfully"}
 
 
@@ -1627,17 +1709,17 @@ def health_check():
     return {"status": "ok", "backend": "FastAPI"}
 
 # Mount CSS & JS folders
-app.mount("/css", StaticFiles(directory=BASE_DIR / "css"), name="css")
-app.mount("/js", StaticFiles(directory=BASE_DIR / "js"), name="js")
+app.mount("/css", StaticFiles(directory=BASE_DIR / "frontend" / "css"), name="css")
+app.mount("/js", StaticFiles(directory=BASE_DIR / "frontend" / "js"), name="js")
 
 @app.get("/")
 def read_root():
-    return FileResponse(BASE_DIR / "index.html")
+    return FileResponse(BASE_DIR / "frontend" / "index.html")
 
 @app.get("/{file_name}")
 def serve_static_html(file_name: str):
-    file_path = BASE_DIR / file_name
+    file_path = BASE_DIR / "frontend" / file_name
     if file_path.is_file() and file_name.endswith((".html", ".js", ".css", ".png", ".jpg", ".svg", ".ico")):
         return FileResponse(file_path)
     # Default fallback to index.html if file doesn't exist
-    return FileResponse(BASE_DIR / "index.html")
+    return FileResponse(BASE_DIR / "frontend" / "index.html")

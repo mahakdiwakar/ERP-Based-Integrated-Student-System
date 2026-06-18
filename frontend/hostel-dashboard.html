@@ -6,7 +6,12 @@
   <title>Hostel Warden Dashboard | College ERP</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/erp.css">
-  <link rel="stylesheet" href="hostel.css">
+  <link rel="stylesheet" href="css/hostel.css">
+  <script src="js/api.js"></script>
+  <script src="js/auth-guard.js"></script>
+  <script>
+    AuthGuard.protect(['hostel_admin', 'warden', 'super_admin', 'college_admin']);
+  </script>
 </head>
 <body class="hostel-body">
 
@@ -370,7 +375,10 @@
   </div>
 
   <!-- API and Client Scripts -->
-  <script src="js/api.js"></script>
-  <script src="hostel.js"></script>
+  <script src="js/hostel.js"></script>
+  <script>
+    AuthGuard.startInactivityTimer();
+    AuthGuard.syncTabs();
+  </script>
 </body>
 </html>

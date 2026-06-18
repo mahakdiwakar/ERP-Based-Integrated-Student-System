@@ -33,15 +33,24 @@
       e.preventDefault();
       const err = document.getElementById('error');
       err.classList.remove('show');
+      const enrollment = document.getElementById('enrollment').value;
+      const password = document.getElementById('password').value;
+      
       try {
-        const data = await AuthAPI.studentLogin(
-          document.getElementById('enrollment').value,
-          document.getElementById('password').value
-        );
+        console.log("Login Started");
+        console.log("Enrollment:", enrollment);
+        
+        const data = await AuthAPI.studentLogin(enrollment, password);
+        console.log("API Response:", data);
+        
+        const token = data.accessToken || data.token;
+        localStorage.setItem("token", token);
         saveSession(data);
-        window.location.href = 'student-dashboard.html';
-      } catch (ex) {
-        err.textContent = ex.message;
+        window.location.href = '/student-dashboard.html';
+      } catch (error) {
+        console.error(error);
+        alert(error.message);
+        err.textContent = error.message;
         err.classList.add('show');
       }
     });

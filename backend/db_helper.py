@@ -1,5 +1,6 @@
 import os
 import requests
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -9,6 +10,9 @@ load_dotenv(dotenv_path=env_path)
 
 BASE_URL = os.getenv("INSFORGE_URL")
 API_KEY = os.getenv("INSFORGE_API_KEY")
+
+# Create a shared Session for HTTP connection pooling (Keep-Alive)
+session = requests.Session()
 
 if not BASE_URL or not API_KEY:
     print("Warning: INSFORGE_URL and INSFORGE_API_KEY must be set in .env.local")
@@ -84,33 +88,36 @@ class QueryBuilder:
         return self
 
     def execute(self):
+        start_time = time.time()
         # Format the endpoint url
         url = f"{BASE_URL}/api/database/records/{self.table}"
         
         if self.method == "GET":
-            response = requests.get(url, headers=self.headers, params=self.params)
+            response = session.get(url, headers=self.headers, params=self.params)
         elif self.method == "POST":
             self.headers["Prefer"] = "return=representation"
             # PostgREST expects a list of objects for insertion
             body = self.body
             if not isinstance(body, list):
                 body = [body]
-            response = requests.post(url, json=body, headers=self.headers, params=self.params)
+            response = session.post(url, json=body, headers=self.headers, params=self.params)
         elif self.method == "UPSERT":
             self.headers["Prefer"] = "resolution=merge-duplicates,return=representation"
             body = self.body
             if not isinstance(body, list):
                 body = [body]
-            response = requests.post(url, json=body, headers=self.headers, params=self.params)
+            response = session.post(url, json=body, headers=self.headers, params=self.params)
         elif self.method == "PATCH":
             self.headers["Prefer"] = "return=representation"
-            response = requests.patch(url, json=self.body, headers=self.headers, params=self.params)
+            response = session.patch(url, json=self.body, headers=self.headers, params=self.params)
         elif self.method == "DELETE":
             self.headers["Prefer"] = "return=representation"
-            response = requests.delete(url, headers=self.headers, params=self.params)
+            response = session.delete(url, headers=self.headers, params=self.params)
         else:
             raise ValueError(f"Unsupported HTTP method: {self.method}")
 
+        duration = (time.time() - start_time) * 1000
+        print(f"[PERF] DB {self.method} {self.table} took {duration:.2f}ms (select={self.params.get('select', '*')})")
         return self._handle_response(response)
 
     def _handle_response(self, response):

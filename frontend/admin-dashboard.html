@@ -328,6 +328,18 @@
     };
 
     async function loadAnalytics() {
+      // Show skeletons
+      document.getElementById('summaryStats').innerHTML = `
+        <div><div class="erp-pct skeleton" style="font-size:1.5rem; width:80px; height:24px; margin-bottom:8px;">&nbsp;</div><div style="color:var(--muted)">Average Marks</div></div>
+        <div><div class="erp-pct skeleton" style="font-size:1.5rem; width:80px; height:24px; margin-bottom:8px;">&nbsp;</div><div style="color:var(--muted)">Highest</div></div>
+        <div><div class="erp-pct skeleton" style="font-size:1.5rem; width:80px; height:24px; margin-bottom:8px;">&nbsp;</div><div style="color:var(--muted)">Lowest</div></div>
+      `;
+      document.getElementById('topTable').innerHTML = `
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+      `;
+
       const d = await AdminAPI.analytics();
 
       document.getElementById('summaryStats').innerHTML = `
@@ -384,6 +396,12 @@
     let attCharts = {};
 
     async function loadAttAnalytics() {
+      document.getElementById('studentAttTable').innerHTML = `
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+        <tr><td colspan="5"><div class="skeleton-text" style="height:14px;margin:6px 0"></div></td></tr>
+      `;
+
       const d = await AdminAPI.attendanceAnalytics();
       
       const deptKeys = Object.keys(d.departmentWise);
@@ -436,6 +454,11 @@
     let feeCharts = {};
 
     async function loadFeeAnalytics() {
+      document.getElementById('feeStatCollected').innerHTML = `<span class="skeleton" style="display:inline-block; width:100px; height:24px;">&nbsp;</span>`;
+      document.getElementById('feeStatPending').innerHTML = `<span class="skeleton" style="display:inline-block; width:100px; height:24px;">&nbsp;</span>`;
+      document.getElementById('feeStatPaid').innerHTML = `<span class="skeleton" style="display:inline-block; width:80px; height:24px;">&nbsp;</span>`;
+      document.getElementById('feeStatUnpaid').innerHTML = `<span class="skeleton" style="display:inline-block; width:80px; height:24px;">&nbsp;</span>`;
+
       const d = await AdminAPI.feeAnalytics();
 
       function fmtInr(n) { return '\u20b9' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:0}); }
@@ -480,8 +503,20 @@
       });
     }
 
-    loadUsers();
-    loadClasses();
+    async function initDashboard() {
+      document.getElementById('usersTable').innerHTML = `
+        <tr><td colspan="6"><div class="skeleton-text" style="height:20px;margin:8px 0"></div></td></tr>
+        <tr><td colspan="6"><div class="skeleton-text" style="height:20px;margin:8px 0"></div></td></tr>
+        <tr><td colspan="6"><div class="skeleton-text" style="height:20px;margin:8px 0"></div></td></tr>
+      `;
+      try {
+        await Promise.all([loadUsers(), loadClasses()]);
+      } catch (err) {
+        console.error("Dashboard initialization error:", err);
+      }
+    }
+
+    initDashboard();
     document.querySelectorAll('#panel-users .erp-card').forEach((card, i) => {
       card.style.setProperty('--reveal-delay', `${i * 0.08}s`);
       card.classList.add('card-reveal');

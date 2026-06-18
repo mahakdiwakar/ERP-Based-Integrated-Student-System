@@ -3,16 +3,47 @@ const API_BASE = '/api';
 const FASTAPI_BASE = '/api';
 
 async function api(path, options = {}, useFastAPI = false) {
-  const token = localStorage.getItem('erp_token');
+  let token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token') || localStorage.getItem('token') || sessionStorage.getItem('token');
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if (token) headers.Authorization = `Bearer ${token}`;
 
   const base = useFastAPI ? FASTAPI_BASE : API_BASE;
-  const res = await fetch(`${base}${path}`, { ...options, headers });
+  let res = await fetch(`${base}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    const refreshToken = sessionStorage.getItem('erp_refresh_token') || localStorage.getItem('erp_refresh_token');
+    if (refreshToken) {
+      try {
+        const refreshRes = await fetch(`${FASTAPI_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        });
+
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          const remember = !!localStorage.getItem('erp_refresh_token');
+          saveSession(refreshData, remember);
+
+          headers.Authorization = `Bearer ${refreshData.accessToken}`;
+          res = await fetch(`${base}${path}`, { ...options, headers });
+        } else {
+          clearSession();
+          window.location.href = 'hostel-login.html?expired=true';
+          throw new Error('Session expired. Please log in again.');
+        }
+      } catch (err) {
+        clearSession();
+        window.location.href = 'hostel-login.html?expired=true';
+        throw err;
+      }
+    }
+  }
+
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    throw new Error(data.error || `Request failed (${res.status})`);
+    throw new Error(data.detail || data.error || `Request failed (${res.status})`);
   }
   return data;
 }
@@ -28,6 +59,7 @@ const AuthAPI = {
 
 const StudentAPI = {
   dashboard: () => api('/student/dashboard'),
+  dashboardSummary: () => api('/student/dashboard-summary'),
   attendance: () => api('/student/attendance'),
   payFees: (amount) => api('/student/fees/pay', { method: 'POST', body: JSON.stringify({ amount }) }),
   getFees: () => api('/student/fees'),
@@ -74,24 +106,59 @@ const HostelAPI = {
   payFee: (amount) => api('/student/hostel/pay', { method: 'POST', body: JSON.stringify({ amount }) }, true)
 };
 
-function saveSession(data) {
-  localStorage.setItem('erp_token', data.token);
+function saveSession(data, remember = false) {
+  const storage = remember ? localStorage : sessionStorage;
+  
+  if (remember) {
+    sessionStorage.removeItem('erp_token');
+    sessionStorage.removeItem('erp_refresh_token');
+    sessionStorage.removeItem('erp_user');
+  } else {
+    localStorage.removeItem('erp_token');
+    localStorage.removeItem('erp_refresh_token');
+    localStorage.removeItem('erp_user');
+  }
+
+  storage.setItem('erp_token', data.accessToken || data.token);
+  storage.setItem('erp_refresh_token', data.refreshToken || '');
   const user = data.user || { role: data.role, name: data.username || 'User' };
-  localStorage.setItem('erp_user', JSON.stringify(user));
+  storage.setItem('erp_user', JSON.stringify(user));
 }
 
 function getUser() {
-  try { return JSON.parse(localStorage.getItem('erp_user')); } catch { return null; }
+  try {
+    return JSON.parse(sessionStorage.getItem('erp_user') || localStorage.getItem('erp_user'));
+  } catch {
+    return null;
+  }
 }
 
 function clearSession() {
   localStorage.removeItem('erp_token');
+  localStorage.removeItem('erp_refresh_token');
   localStorage.removeItem('erp_user');
+  localStorage.removeItem('token');
+  sessionStorage.removeItem('erp_token');
+  sessionStorage.removeItem('erp_refresh_token');
+  sessionStorage.removeItem('erp_user');
+  sessionStorage.removeItem('token');
 }
 
 function requireRole(role, redirect) {
   const user = getUser();
-  if (!user || user.role !== role) {
+  if (!user) {
+    window.location.href = redirect;
+    return null;
+  }
+  
+  let authorized = false;
+  if (role === 'admin') {
+    authorized = ['admin', 'super_admin', 'college_admin', 'hostel_admin', 'warden'].includes(user.role);
+  } else {
+    authorized = user.role === role;
+  }
+
+  if (!authorized) {
     window.location.href = redirect;
     return null;
   }
@@ -100,6 +167,8 @@ function requireRole(role, redirect) {
 
 function logout(loginPage) {
   clearSession();
+  // Trigger storage event for tab synchronization
+  localStorage.setItem('erp_logout_event', Date.now().toString());
   window.location.href = loginPage;
 }
 

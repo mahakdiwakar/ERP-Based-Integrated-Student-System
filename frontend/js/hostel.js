@@ -4,12 +4,16 @@
 
 'use strict';
 
-// ── Auth Guard ──
 const user = getUser();
-if (!user || user.role !== 'admin') {
-  window.location.href = 'hostel-login.html';
-} else {
+if (user) {
   document.getElementById('userName').textContent = user.name;
+  const metaEl = document.getElementById('userMeta');
+  if (metaEl) {
+    metaEl.textContent = user.role === 'super_admin' ? 'Super Administrator' :
+                         user.role === 'college_admin' ? 'College Administrator' :
+                         user.role === 'hostel_admin' ? 'Hostel Administrator' :
+                         user.role === 'warden' ? 'Hostel Warden' : 'Staff';
+  }
 }
 
 // Logout hook
@@ -69,8 +73,41 @@ const STATIC_ROOMS = [
 
 // ── Fetch & Load Data ──
 async function loadDashboardData() {
+  const tbody = document.getElementById('studentTableBody');
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10">
+          <div class="skeleton-text" style="height: 18px; margin: 8px 0;"></div>
+          <div class="skeleton-text" style="height: 18px; margin: 8px 0;"></div>
+          <div class="skeleton-text" style="height: 18px; margin: 8px 0;"></div>
+        </td>
+      </tr>
+    `;
+  }
+  const roomContainer = document.getElementById('roomGridContainer');
+  if (roomContainer) {
+    roomContainer.innerHTML = `
+      <div class="room-card glass skeleton" style="height: 140px;"></div>
+      <div class="room-card glass skeleton" style="height: 140px;"></div>
+      <div class="room-card glass skeleton" style="height: 140px;"></div>
+    `;
+  }
+  const cardTotalStudents = document.getElementById('cardTotalStudents');
+  if (cardTotalStudents) cardTotalStudents.innerHTML = `<span class="skeleton" style="display:inline-block; width:60px; height:36px;">&nbsp;</span>`;
+  const cardOccupiedBeds = document.getElementById('cardOccupiedBeds');
+  if (cardOccupiedBeds) cardOccupiedBeds.innerHTML = `<span class="skeleton" style="display:inline-block; width:60px; height:36px;">&nbsp;</span>`;
+  const cardAvailableBeds = document.getElementById('cardAvailableBeds');
+  if (cardAvailableBeds) cardAvailableBeds.innerHTML = `<span class="skeleton" style="display:inline-block; width:60px; height:36px;">&nbsp;</span>`;
+
   try {
-    const token = localStorage.getItem('erp_token');
+    const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
+    const headers = {
+      'Authorization': `Bearer ${token}`
+    };
+    console.log("DEBUG_AUTH token source: sessionStorage || localStorage");
+    console.log("DEBUG_AUTH token:", token ? token.substring(0, 15) + "..." : null);
+    console.log("DEBUG_AUTH headers:", headers);
     
     // Fetch allocations
     let url = `${FASTAPI_BASE}/hostel/students`;
@@ -80,11 +117,7 @@ async function loadDashboardData() {
     if (activeFilters.search) params.push(`search=${encodeURIComponent(activeFilters.search)}`);
     if (params.length > 0) url += `?${params.join('&')}`;
 
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const res = await fetch(url, { headers });
 
     if (!res.ok) throw new Error('Failed to load student allocations registry');
     const data = await res.json();
@@ -283,7 +316,14 @@ window.openAddModal = () => {
 
 document.getElementById('addStudentForm').onsubmit = async (e) => {
   e.preventDefault();
-  const token = localStorage.getItem('erp_token');
+  const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+  console.log("DEBUG_AUTH token source: sessionStorage || localStorage");
+  console.log("DEBUG_AUTH token:", token ? token.substring(0, 15) + "..." : null);
+  console.log("DEBUG_AUTH headers:", headers);
   
   const payload = {
     student_name: document.getElementById('addName').value.trim(),
@@ -300,10 +340,7 @@ document.getElementById('addStudentForm').onsubmit = async (e) => {
   try {
     const res = await fetch(`${FASTAPI_BASE}/hostel/students`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
@@ -362,8 +399,15 @@ window.openEditModal = (id) => {
 
 document.getElementById('editStudentForm').onsubmit = async (e) => {
   e.preventDefault();
-  const token = localStorage.getItem('erp_token');
+  const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
   const id = document.getElementById('editStudentId').value;
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+  console.log("DEBUG_AUTH token source: sessionStorage || localStorage");
+  console.log("DEBUG_AUTH token:", token ? token.substring(0, 15) + "..." : null);
+  console.log("DEBUG_AUTH headers:", headers);
   
   const payload = {
     student_name: document.getElementById('editNameDisplay').value,
@@ -380,10 +424,7 @@ document.getElementById('editStudentForm').onsubmit = async (e) => {
   try {
     const res = await fetch(`${FASTAPI_BASE}/hostel/students/${id}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
@@ -406,15 +447,19 @@ window.openDeleteModal = (id) => {
 };
 
 window.confirmDeleteAllocation = async () => {
-  const token = localStorage.getItem('erp_token');
+  const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
   const id = document.getElementById('deleteStudentId').value;
+  const headers = {
+    'Authorization': `Bearer ${token}`
+  };
+  console.log("DEBUG_AUTH token source: sessionStorage || localStorage");
+  console.log("DEBUG_AUTH token:", token ? token.substring(0, 15) + "..." : null);
+  console.log("DEBUG_AUTH headers:", headers);
 
   try {
     const res = await fetch(`${FASTAPI_BASE}/hostel/students/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+      headers
     });
 
     const data = await res.json();

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Access Denied | College ERP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050505;
+      --card: #0b0b0b;
+      --gold: #D4AF37;
+      --gold-light: #F5E6A8;
+      --gold-glow: rgba(212, 175, 55, 0.15);
+      --border: rgba(212, 175, 55, 0.25);
+      --text: #ffffff;
+      --muted: #a1a1aa;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Ambient Glow Orbs */
+    .orb {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(160px);
+      opacity: 0.1;
+      z-index: 0;
+    }
+    .orb-1 {
+      top: -200px;
+      left: -200px;
+      background: radial-gradient(circle, var(--gold), transparent 70%);
+    }
+    .orb-2 {
+      bottom: -200px;
+      right: -200px;
+      background: radial-gradient(circle, var(--gold), transparent 70%);
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 500px;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Logo */
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+
+    .logo svg {
+      width: 36px;
+      height: 36px;
+      filter: drop-shadow(0 0 8px var(--gold-glow));
+    }
+
+    .logo span {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+
+    .logo span::after {
+      content: 'ERP';
+      color: var(--gold);
+      margin-left: 2px;
+    }
+
+    /* Card */
+    .card {
+      width: 100%;
+      background: rgba(11, 11, 11, 0.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 50px 40px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.05);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(212, 175, 55, 0.45);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(212, 175, 55, 0.12);
+    }
+
+    /* Shield Icon */
+    .icon-container {
+      width: 90px;
+      height: 90px;
+      margin: 0 auto 28px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(212, 175, 55, 0.05);
+      box-shadow: 0 0 20px var(--gold-glow);
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .icon-container svg {
+      width: 44px;
+      height: 44px;
+      fill: var(--gold);
+      filter: drop-shadow(0 0 4px var(--gold-glow));
+    }
+
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold), #B8962E);
+      color: #050505;
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 32px rgba(212, 175, 55, 0.5);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-outline:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 15px var(--gold-glow);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+        border-color: rgba(212, 175, 55, 0.6);
+      }
+      50% {
+        box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+        border-color: rgba(212, 175, 55, 1);
+      }
+      100% {
+        box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+        border-color: rgba(212, 175, 55, 0.6);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Light Orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="wrapper">
+    <!-- Header -->
+    <header class="logo">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="8" width="40" height="32" rx="4" stroke="#D4AF37" stroke-width="2"/>
+        <path d="M12 20h24M12 28h16" stroke="#D4AF37" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="36" cy="28" r="4" fill="#D4AF37"/>
+      </svg>
+      <span>College</span>
+    </header>
+
+    <!-- Card -->
+    <main class="card">
+      <div class="icon-container">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </svg>
+      </div>
+      <h1 class="title">403 — Access Denied</h1>
+      <p class="subtitle">Your account role does not have authorization to view this ERP section. Please contact your system administrator if you believe this is in error.</p>
+
+      <button class="btn btn-gold" onclick="AuthGuard.redirectToAuthorizedDashboard()">
+        Go to My Dashboard
+      </button>
+      <a href="hostel-login.html" class="btn btn-outline">
+        Back to Login
+      </a>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth-guard.js"></script>
+</body>
+</html>

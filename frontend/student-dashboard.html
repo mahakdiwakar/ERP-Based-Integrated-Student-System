@@ -21,34 +21,38 @@
 
     <div class="erp-container">
       <h1 class="erp-page-title">Student Dashboard</h1>
-      <p class="erp-page-sub" id="welcome">Welcome back</p>
+      <p class="erp-page-sub skeleton-text" id="welcome" style="display: inline-block; min-width: 200px;">Loading student details...</p>
 
       <div class="erp-grid-3" id="cards">
         <!-- Attendance -->
         <div class="erp-card" id="cardAtt">
           <h3 class="erp-card-title">📊 Attendance Status</h3>
-          <div class="erp-pct" id="attPct">—%</div>
+          <div class="erp-pct skeleton" id="attPct">—%</div>
           <div class="erp-progress"><div class="erp-progress-fill" id="attBar"></div></div>
-          <div class="erp-stat-row"><span>Present</span><span id="attPresent">—</span></div>
-          <div class="erp-stat-row"><span>Total Classes</span><span id="attTotal">—</span></div>
+          <div class="erp-stat-row"><span>Present</span><span id="attPresent" class="skeleton" style="display:inline-block; width:40px;">&nbsp;</span></div>
+          <div class="erp-stat-row"><span>Total Classes</span><span id="attTotal" class="skeleton" style="display:inline-block; width:40px;">&nbsp;</span></div>
         </div>
 
         <!-- Marks -->
         <div class="erp-card" id="cardMarks">
           <h3 class="erp-card-title">📝 Mid Sem Marks</h3>
-          <ul class="erp-marks-list" id="marksList"></ul>
+          <ul class="erp-marks-list" id="marksList">
+            <li class="skeleton-text" style="width: 80%;"></li>
+            <li class="skeleton-text" style="width: 60%;"></li>
+            <li class="skeleton-text" style="width: 70%;"></li>
+          </ul>
           <div class="erp-stat-row" style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">
-            <span>Average</span><span id="avgMarks">—%</span>
+            <span>Average</span><span id="avgMarks" class="skeleton" style="display:inline-block; width:50px;">&nbsp;</span>
           </div>
         </div>
 
         <!-- Fees -->
         <div class="erp-card" id="cardFees">
           <h3 class="erp-card-title">💳 Fee Status</h3>
-          <div class="erp-stat-row"><span>Total Fees</span><span id="feeTotal">—</span></div>
-          <div class="erp-stat-row"><span>Paid Amount</span><span id="feePaid">—</span></div>
-          <div class="erp-stat-row"><span>Pending</span><span id="feePending">—</span></div>
-          <div style="margin:16px 0"><span class="erp-badge" id="feeBadge">—</span></div>
+          <div class="erp-stat-row"><span>Total Fees</span><span id="feeTotal" class="skeleton" style="display:inline-block; width:80px;">&nbsp;</span></div>
+          <div class="erp-stat-row"><span>Paid Amount</span><span id="feePaid" class="skeleton" style="display:inline-block; width:80px;">&nbsp;</span></div>
+          <div class="erp-stat-row"><span>Pending</span><span id="feePending" class="skeleton" style="display:inline-block; width:80px;">&nbsp;</span></div>
+          <div style="margin:16px 0"><span class="erp-badge skeleton" id="feeBadge" style="display:inline-block; width:80px;">&nbsp;</span></div>
           <a href="student-payment.html" class="erp-btn erp-btn-gold erp-btn-block" id="payBtn" style="display:none">Pay Now</a>
           <button class="erp-btn erp-btn-outline erp-btn-block" id="receiptBtn" style="display:none;margin-top:8px">Download Receipt</button>
         </div>
@@ -57,9 +61,9 @@
         <div class="erp-card" id="cardHostel">
           <h3 class="erp-card-title">🏠 Hostel Status</h3>
           <div id="hStatusBody">
-            <div class="erp-pct" id="hRoom">None</div>
-            <div class="erp-stat-row"><span>Hostel</span><span id="hName">—</span></div>
-            <div class="erp-stat-row"><span>Status</span><span id="hBadgeWrap"><span class="erp-badge pending" id="hBadge">Waiting</span></span></div>
+            <div class="erp-pct skeleton" id="hRoom">None</div>
+            <div class="erp-stat-row"><span>Hostel</span><span id="hName" class="skeleton" style="display:inline-block; width:100px;">&nbsp;</span></div>
+            <div class="erp-stat-row"><span>Status</span><span id="hBadgeWrap"><span class="erp-badge skeleton" id="hBadge" style="display:inline-block; width:80px;">&nbsp;</span></span></div>
             <a href="hostel.html" class="erp-btn erp-btn-outline erp-btn-block" style="margin-top:16px">View Details</a>
           </div>
         </div>
@@ -69,22 +73,22 @@
         <!-- Attendance Calendar -->
         <div class="erp-card" id="cardCalendar">
           <h3 class="erp-card-title">📅 Daily Attendance History</h3>
-          <div id="studentCalendar" style="display: flex; justify-content: center; margin-top: 16px;"></div>
+          <div id="studentCalendar" class="skeleton" style="display: flex; justify-content: center; margin-top: 16px; height: 320px; border-radius: var(--radius);"></div>
         </div>
 
         <!-- Monthly Summary & Details -->
         <div class="erp-card" id="cardSummary">
           <h3 class="erp-card-title">📌 Monthly Summary & Details</h3>
-          <div class="erp-stat-row"><span>Present Days (Month)</span><span id="monthPresent">—</span></div>
-          <div class="erp-stat-row"><span>Absent Days (Month)</span><span id="monthAbsent">—</span></div>
-          <div class="erp-stat-row"><span>Attendance (Month)</span><span id="monthPct">—%</span></div>
+          <div class="erp-stat-row"><span>Present Days (Month)</span><span id="monthPresent" class="skeleton" style="display:inline-block; width:40px;">&nbsp;</span></div>
+          <div class="erp-stat-row"><span>Absent Days (Month)</span><span id="monthAbsent" class="skeleton" style="display:inline-block; width:40px;">&nbsp;</span></div>
+          <div class="erp-stat-row"><span>Attendance (Month)</span><span id="monthPct" class="skeleton" style="display:inline-block; width:50px;">&nbsp;</span></div>
           
           <div style="margin-top:24px;border-top:1px solid rgba(255,255,255,0.06);padding-top:16px;">
             <h4 style="color:var(--gold);margin-bottom:12px;font-size:0.9rem;text-transform:uppercase;letter-spacing:1px;">Selected Date Details</h4>
-            <div class="erp-stat-row"><span>Date</span><span id="selDate">—</span></div>
-            <div class="erp-stat-row"><span>Class</span><span id="selClass">—</span></div>
-            <div class="erp-stat-row"><span>Teacher</span><span id="selTeacher">—</span></div>
-            <div class="erp-stat-row"><span>Status</span><span id="selStatus">—</span></div>
+            <div class="erp-stat-row"><span>Date</span><span id="selDate" class="skeleton" style="display:inline-block; width:120px;">&nbsp;</span></div>
+            <div class="erp-stat-row"><span>Class</span><span id="selClass" class="skeleton" style="display:inline-block; width:80px;">&nbsp;</span></div>
+            <div class="erp-stat-row"><span>Teacher</span><span id="selTeacher" class="skeleton" style="display:inline-block; width:120px;">&nbsp;</span></div>
+            <div class="erp-stat-row"><span>Status</span><span id="selStatus" class="skeleton" style="display:inline-block; width:80px;">&nbsp;</span></div>
           </div>
         </div>
       </div>
@@ -101,7 +105,7 @@
 
     async function downloadReceipt(feeId) {
       try {
-        const token = localStorage.getItem('erp_token');
+        const token = sessionStorage.getItem('erp_token') || localStorage.getItem('erp_token');
         const res = await fetch(`${API_BASE}/student/receipt/${feeId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -127,31 +131,58 @@
     }
 
     async function load() {
-      const d = await StudentAPI.dashboard();
-      const att = await StudentAPI.attendance();
-      document.getElementById('welcome').textContent = `${d.student.name} · ${d.student.department} · ${d.student.class}`;
+      const d = await StudentAPI.dashboardSummary();
+      
+      const welcome = document.getElementById('welcome');
+      welcome.classList.remove('skeleton-text');
+      welcome.textContent = `${d.student.name} · ${d.student.department} · ${d.student.class}`;
+      
       document.getElementById('userMeta').textContent = d.student.enrollment;
 
-      const pct = att.attendance_percentage;
+      const attPctEl = document.getElementById('attPct');
+      attPctEl.classList.remove('skeleton');
+      const pct = d.attendance.percentage;
       const color = attColor(pct);
-      document.getElementById('attPct').textContent = pct + '%';
+      attPctEl.textContent = pct + '%';
+      
       document.getElementById('attBar').style.width = pct + '%';
       document.getElementById('attBar').className = 'erp-progress-fill ' + color;
-      document.getElementById('attPresent').textContent = att.present_days;
-      document.getElementById('attTotal').textContent = att.present_days + att.absent_days;
+      
+      const attPresentEl = document.getElementById('attPresent');
+      attPresentEl.classList.remove('skeleton');
+      attPresentEl.textContent = d.attendance.present;
+      
+      const attTotalEl = document.getElementById('attTotal');
+      attTotalEl.classList.remove('skeleton');
+      attTotalEl.textContent = d.attendance.total;
 
-      document.getElementById('marksList').innerHTML = d.marks.subjects.map(m =>
+      const marksList = document.getElementById('marksList');
+      marksList.innerHTML = d.marks.subjects.map(m =>
         `<li><span>${m.subject}</span><span>${m.obtained}/${m.max}</span></li>`
       ).join('') || '<li><span>No marks yet</span><span>—</span></li>';
-      document.getElementById('avgMarks').textContent = d.marks.average + '%';
+      
+      const avgMarksEl = document.getElementById('avgMarks');
+      avgMarksEl.classList.remove('skeleton');
+      avgMarksEl.textContent = d.marks.average + '%';
 
-      document.getElementById('feeTotal').textContent = fmt(d.fees.total);
-      document.getElementById('feePaid').textContent = fmt(d.fees.paid);
-      document.getElementById('feePending').textContent = fmt(d.fees.pending);
+      const feeTotalEl = document.getElementById('feeTotal');
+      feeTotalEl.classList.remove('skeleton');
+      feeTotalEl.textContent = fmt(d.fees.total);
+      
+      const feePaidEl = document.getElementById('feePaid');
+      feePaidEl.classList.remove('skeleton');
+      feePaidEl.textContent = fmt(d.fees.paid);
+      
+      const feePendingEl = document.getElementById('feePending');
+      feePendingEl.classList.remove('skeleton');
+      feePendingEl.textContent = fmt(d.fees.pending);
+      
       const badge = document.getElementById('feeBadge');
+      badge.classList.remove('skeleton');
       const statusClass = (d.fees.status || 'pending').replace(/_/g, '-');
       badge.textContent = (d.fees.status || 'pending').replace(/_/g, ' ').toUpperCase();
       badge.className = 'erp-badge ' + statusClass;
+      
       document.getElementById('payBtn').style.display = d.fees.pending > 0 ? 'inline-flex' : 'none';
 
       const receiptBtn = document.getElementById('receiptBtn');
@@ -164,7 +195,7 @@
 
       // Premium Custom Calendar setup
       const historyMap = {};
-      (att.records || []).forEach(h => {
+      (d.attendance.history || []).forEach(h => {
         historyMap[h.date] = h;
       });
 
@@ -182,6 +213,8 @@
 
       function renderCalendar(month, year) {
         const calContainer = document.getElementById('studentCalendar');
+        calContainer.classList.remove('skeleton');
+        calContainer.style.height = 'auto';
         calContainer.innerHTML = '';
 
         // Build premium skeleton
@@ -286,24 +319,34 @@
             const dateObj = new Date(year, month, dayNum);
             const options = { year: 'numeric', month: 'long', day: 'numeric' };
             const formattedDate = dateObj.toLocaleDateString('en-US', options);
-            document.getElementById('selDate').textContent = formattedDate;
+            
+            const selDateEl = document.getElementById('selDate');
+            selDateEl.classList.remove('skeleton');
+            selDateEl.textContent = formattedDate;
 
             // Details panel update
+            const selClassEl = document.getElementById('selClass');
+            selClassEl.classList.remove('skeleton');
+            const selTeacherEl = document.getElementById('selTeacher');
+            selTeacherEl.classList.remove('skeleton');
+            const selStatusEl = document.getElementById('selStatus');
+            selStatusEl.classList.remove('skeleton');
+
             if (h) {
-              document.getElementById('selClass').textContent = stClass;
-              document.getElementById('selTeacher').textContent = h.teacher || 'Unknown';
-              document.getElementById('selStatus').textContent = h.status.toUpperCase();
-              document.getElementById('selStatus').style.color = h.status === 'present' ? 'var(--green)' : 'var(--red)';
+              selClassEl.textContent = stClass;
+              selTeacherEl.textContent = h.teacher || 'Unknown';
+              selStatusEl.textContent = h.status.toUpperCase();
+              selStatusEl.style.color = h.status === 'present' ? 'var(--green)' : 'var(--red)';
             } else if (isSun) {
-              document.getElementById('selClass').textContent = '—';
-              document.getElementById('selTeacher').textContent = '—';
-              document.getElementById('selStatus').textContent = 'HOLIDAY';
-              document.getElementById('selStatus').style.color = 'var(--blue)';
+              selClassEl.textContent = '—';
+              selTeacherEl.textContent = '—';
+              selStatusEl.textContent = 'HOLIDAY';
+              selStatusEl.style.color = 'var(--blue)';
             } else {
-              document.getElementById('selClass').textContent = '—';
-              document.getElementById('selTeacher').textContent = '—';
-              document.getElementById('selStatus').textContent = 'Not Marked';
-              document.getElementById('selStatus').style.color = 'var(--muted)';
+              selClassEl.textContent = '—';
+              selTeacherEl.textContent = '—';
+              selStatusEl.textContent = 'Not Marked';
+              selStatusEl.style.color = 'var(--muted)';
             }
           };
 
@@ -341,7 +384,7 @@
         
         let mPresent = 0;
         let mTotal = 0;
-        (att.records || []).forEach(h => {
+        (d.attendance.history || []).forEach(h => {
           const parts = h.date.split('-');
           if (parts.length === 3) {
             const hy = parseInt(parts[0], 10);
@@ -356,9 +399,17 @@
         let mAbsent = mTotal - mPresent;
         let mPct = mTotal > 0 ? Math.round((mPresent / mTotal) * 100) : 0;
         
-        document.getElementById('monthPresent').textContent = mPresent;
-        document.getElementById('monthAbsent').textContent = mAbsent;
-        document.getElementById('monthPct').textContent = mPct + '%';
+        const monthPresentEl = document.getElementById('monthPresent');
+        monthPresentEl.classList.remove('skeleton');
+        monthPresentEl.textContent = mPresent;
+        
+        const monthAbsentEl = document.getElementById('monthAbsent');
+        monthAbsentEl.classList.remove('skeleton');
+        monthAbsentEl.textContent = mAbsent;
+        
+        const monthPctEl = document.getElementById('monthPct');
+        monthPctEl.classList.remove('skeleton');
+        monthPctEl.textContent = mPct + '%';
       }
 
       // Initial calendar render
@@ -372,21 +423,24 @@
       }
       
       // Hostel Info
-      try {
-        const h = await HostelAPI.studentHostel();
-        if (h.allocated) {
-          document.getElementById('hRoom').textContent = h.status === 'Allocated' ? 'Room ' + h.room_number : 'Waiting';
-          document.getElementById('hName').textContent = h.hostel_name;
-          const hBadge = document.getElementById('hBadge');
-          hBadge.textContent = h.status.toUpperCase();
-          hBadge.className = 'erp-badge ' + (h.status === 'Allocated' ? 'paid' : 'pending');
-        } else {
-          document.getElementById('hRoom').textContent = 'None';
-          document.getElementById('hName').textContent = 'Not Applied';
-          document.getElementById('hBadge').textContent = 'NONE';
-        }
-      } catch (err) {
-        console.error('Hostel info error:', err);
+      const hRoomEl = document.getElementById('hRoom');
+      hRoomEl.classList.remove('skeleton');
+      const hNameEl = document.getElementById('hName');
+      hNameEl.classList.remove('skeleton');
+      const hBadge = document.getElementById('hBadge');
+      hBadge.classList.remove('skeleton');
+
+      const h = d.hostel;
+      if (h && h.allocated) {
+        hRoomEl.textContent = h.status === 'Allocated' ? 'Room ' + h.room_number : 'Waiting';
+        hNameEl.textContent = h.hostel_name;
+        hBadge.textContent = h.status.toUpperCase();
+        hBadge.className = 'erp-badge ' + (h.status === 'Allocated' ? 'paid' : 'pending');
+      } else {
+        hRoomEl.textContent = 'None';
+        hNameEl.textContent = 'Not Applied';
+        hBadge.textContent = 'NONE';
+        hBadge.className = 'erp-badge pending';
       }
 
       document.querySelectorAll('.erp-card').forEach((card, i) => {
